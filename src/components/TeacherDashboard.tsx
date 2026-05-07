@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { User, GameDef } from '../types';
-import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X } from 'lucide-react';
+import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image } from 'lucide-react';
 import { getGames, saveGames, getAppContent, saveAppContent, deleteChallenge, getUsers, saveUsers, getStoreData, setStoreData } from '../lib/store';
 import { AppData } from '../data/content';
 import { motion, AnimatePresence } from 'motion/react';
+import { soundManager } from '../lib/sound';
+import GifLibrary from './GifLibrary';
 
 interface Props {
   user: User;
@@ -11,7 +13,7 @@ interface Props {
 }
 
 export default function TeacherDashboard({ user, onLogout }: Props) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'manage_games' | 'content' | 'manage_students'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'manage_games' | 'content' | 'manage_students' | 'gif_library'>('overview');
   const [games, setGames] = useState<GameDef[]>([]);
   const [appContent, setAppContent] = useState<AppData | null>(null);
   
@@ -22,12 +24,23 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
   // Student management state
   const [studentsList, setStudentsList] = useState<User[]>([]);
   const [openPickerId, setOpenPickerId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveToast, setSaveToast] = useState<'saving' | 'done' | 'error' | null>(null);
+  const [muted, setMuted] = useState(soundManager.isMuted);
 
-  /** Wrapper: hiện modal loading trong khi lưu */
+  /** Wrapper: hiện toast nhỏ góc phải trong khi lưu, KHÔNG block UI */
   const withSaving = async (fn: () => Promise<void>) => {
-    setIsSaving(true);
-    try { await fn(); } finally { setIsSaving(false); }
+    setSaveToast('saving');
+    try {
+      await fn();
+      setSaveToast('done');
+      soundManager.play('save_ok');
+      setTimeout(() => setSaveToast(null), 2000);
+    } catch (e) {
+      console.error(e);
+      setSaveToast('error');
+      soundManager.play('warning');
+      setTimeout(() => setSaveToast(null), 3000);
+    }
   };
 
   useEffect(() => {
@@ -152,25 +165,26 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
   return (
     <div className="min-h-screen w-full bg-[#FFFBEB] text-[#1E293B] flex flex-col font-sans overflow-hidden">
 
-      {/* ─── Saving Modal ──────────────────────────────────────────── */}
+      {/* ─── Save Toast (góc trên phải, không block UI) ─── */}
       <AnimatePresence>
-        {isSaving && (
+        {saveToast && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 60 }}
+            className="fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl font-bold text-sm"
+            style={{
+              background: saveToast === 'done' ? '#10b981' : saveToast === 'error' ? '#ef4444' : '#8b5cf6',
+              color: '#fff'
+            }}
           >
-            <motion.div
-              initial={{ scale: 0.85, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.85 }}
-              className="bg-white rounded-3xl px-10 py-8 shadow-2xl flex flex-col items-center gap-4"
-            >
-              <div className="w-14 h-14 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-              <p className="font-black text-xl text-slate-700">Đang lưu...</p>
-              <p className="text-sm text-slate-400 font-medium">Dữ liệu đang được ghi vào file JSON</p>
-            </motion.div>
+            {saveToast === 'saving' ? (
+              <><div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />Đang lưu...</>
+            ) : saveToast === 'error' ? (
+              <>⚠️ Có lỗi, vui lòng thử lại</>
+            ) : (
+              <>✅ Đã lưu thành công!</>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -186,12 +200,21 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
           </div>
         </div>
 
-        <button 
-          onClick={onLogout}
-          className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-full font-bold hover:bg-red-100 transition-colors border-2 border-red-200"
-        >
-          <LogOut className="w-4 h-4" /> Thoát
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { const m = soundManager.toggleMute(); setMuted(m); }}
+            title={muted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+            className="p-2 rounded-xl border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
+          >
+            {muted ? <VolumeX className="w-5 h-5 text-red-400" /> : <Volume2 className="w-5 h-5 text-slate-500" />}
+          </button>
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-full font-bold hover:bg-red-100 transition-colors border-2 border-red-200"
+          >
+            <LogOut className="w-4 h-4" /> Thoát
+          </button>
+        </div>
       </nav>
 
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
@@ -209,6 +232,9 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
             </button>
             <button onClick={() => {setActiveTab('manage_students'); setEditingGame(null); setEditingChallenge(null);}} className={`w-auto md:w-full text-left p-3 md:p-4 rounded-2xl font-bold flex items-center gap-2 md:gap-3 transition-all whitespace-nowrap ${activeTab === 'manage_students' ? 'bg-purple-100 text-purple-700 border-2 border-purple-300' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-transparent'}`}>
               <Users className="w-5 h-5 md:w-6 md:h-6 shrink-0" /> <span className="hidden sm:inline">Học sinh</span>
+            </button>
+            <button onClick={() => {setActiveTab('gif_library'); setEditingGame(null); setEditingChallenge(null);}} className={`w-auto md:w-full text-left p-3 md:p-4 rounded-2xl font-bold flex items-center gap-2 md:gap-3 transition-all whitespace-nowrap ${activeTab === 'gif_library' ? 'bg-purple-100 text-purple-700 border-2 border-purple-300' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-transparent'}`}>
+              <Image className="w-5 h-5 md:w-6 md:h-6 shrink-0" /> <span className="hidden sm:inline">Thư viện GIF</span>
             </button>
           </div>
         </aside>
@@ -789,6 +815,9 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
             );
           })()}
           </AnimatePresence>
+
+          {/* ─── Thư viện GIF ─── */}
+          {activeTab === 'gif_library' && <GifLibrary />}
         </main>
       </div>
     </div>

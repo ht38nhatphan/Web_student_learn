@@ -12,8 +12,9 @@ import LoginScreen from './components/LoginScreen';
 import TeacherDashboard from './components/TeacherDashboard';
 import StudentHome from './components/StudentHome';
 import LessonEngine from './components/LessonEngine';
-import { getStoreData, setStoreData, loadAllData } from './lib/store';
+import { getStoreData, setStoreData, loadAllData, awardStars, fetchUserStars, onStarsChanged } from './lib/store';
 import { isSupabaseConfigured } from './lib/supabase';
+import { initSound, soundManager } from './lib/sound';
 
 type AppState = 'login' | 'studentHome' | 'teacherHome' | 'playing' | 'celebration';
 
@@ -28,13 +29,15 @@ export default function App() {
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
+    initSound();
     if (!isSupabaseConfigured) {
-      setAppReady(true); // chạy vào màn hình cấu hình
+      setAppReady(true);
       return;
     }
     loadAllData()
       .then(() => {
         setAppReady(true);
+        // Không phát âm ngay — cần user gesture trước (AudioContext policy)
         const savedUser = getStoreData<User | null>('hvtv_user', null);
         if (savedUser) {
           setCurrentUser(savedUser);
@@ -49,6 +52,14 @@ export default function App() {
           setAppState(savedUser.role === 'teacher' ? 'teacherHome' : 'studentHome');
         }
       });
+
+    // Đăng ký callback để cập nhật sao khi awardStars thay đổi
+    onStarsChanged((userId, newStars) => {
+      setCurrentUser(prev => {
+        if (!prev || prev.id !== userId) return prev;
+        return { ...prev, stars: newStars };
+      });
+    });
   }, []);
 
   // Chưa sẵn sàng — hiển thị loading
@@ -90,13 +101,13 @@ export default function App() {
     );
   }
 
-  const handleLogin = (user: User) => {
-    // In a real app we fetch their current stars here. For now we use the mock.
-    const stars = getStoreData<number>(`hvtv_stars_${user.id}`, user.stars);
+  const handleLogin = async (user: User) => {
+    // Load sao mới nhất từ Supabase thay vì localStorage
+    const stars = await fetchUserStars(user.id);
     const logUser = { ...user, stars };
     setCurrentUser(logUser);
     setStoreData('hvtv_user', logUser);
-    
+
     if (user.role === 'teacher') {
       setAppState('teacherHome');
     } else {
@@ -127,21 +138,14 @@ export default function App() {
 
   const addStars = (amount: number) => {
     if (!currentUser) return;
-    const newStars = currentUser.stars + amount;
-    const updatedUser = { ...currentUser, stars: newStars };
-    setCurrentUser(updatedUser);
-    setStoreData(`hvtv_stars_${currentUser.id}`, newStars);
-    // Also update logged in user data slightly hacky but works for local mode
-    setStoreData('hvtv_user', updatedUser);
+    // Dùng awardStars thay vì localStorage trực tiếp
+    awardStars(currentUser.id, amount, 'correct_answer');
+    // UI đã được cập nhật qua onStarsChanged callback
   };
 
   const deductStars = (amount: number) => {
     if (!currentUser) return;
-    const newStars = Math.max(0, currentUser.stars - amount);
-    const updatedUser = { ...currentUser, stars: newStars };
-    setCurrentUser(updatedUser);
-    setStoreData(`hvtv_stars_${currentUser.id}`, newStars);
-    setStoreData('hvtv_user', updatedUser);
+    awardStars(currentUser.id, -amount, 'wrong_penalty');
   };
 
   const handleSelectChallenge = (game: GameDef, challenge: ChallengeDef) => {

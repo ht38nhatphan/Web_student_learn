@@ -1,6 +1,49 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&display=swap');
 @import "tailwindcss";
 
+/* ─── Design Tokens ─────────────────────────────────────── */
+:root {
+  /* 6 theme colors — 3 shade mỗi màu (light / base / dark) */
+  --blue-light:   #EFF6FF; --blue-base:   #3B82F6; --blue-dark:   #1D4ED8;
+  --orange-light: #FFF7ED; --orange-base: #F97316; --orange-dark: #C2410C;
+  --green-light:  #F0FDF4; --green-base:  #22C55E; --green-dark:  #15803D;
+  --purple-light: #FAF5FF; --purple-base: #A855F7; --purple-dark: #7E22CE;
+  --pink-light:   #FDF2F8; --pink-base:   #EC4899; --pink-dark:   #9D174D;
+  --red-light:    #FFF1F2; --red-base:    #EF4444; --red-dark:    #B91C1C;
+
+  /* Brand */
+  --brand-amber:  #F59E0B;
+  --brand-yellow: #FDE68A;
+  --bg-page:      #FFFBEB;
+  --text-primary: #1E293B;
+  --text-muted:   #64748B;
+
+  /* Spacing scale (8px) */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px; --sp-12: 48px;
+
+  /* Border radius */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-2xl: 32px;
+
+  /* Typography */
+  --text-caption: 12px; --text-body: 14px; --text-title: 16px;
+  --text-heading: 24px; --text-score: 28px;
+  --fw-normal: 400; --fw-semi: 600; --fw-bold: 700; --fw-black: 800;
+
+  /* Transitions */
+  --t-fast: 100ms ease; --t-base: 200ms ease; --t-slow: 350ms ease;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page:      #0F172A;
+    --text-primary: #F1F5F9;
+    --text-muted:   #94A3B8;
+  }
+  body { background: var(--bg-page); color: var(--text-primary); }
+}
+
 /* ─── Base ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 

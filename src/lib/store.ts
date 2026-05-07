@@ -34,16 +34,23 @@ let _questions: Pick<AppData, 'fillblank' | 'matchword' | 'multiplechoice' | 're
 // ─── Load tất cả dữ liệu từ Supabase khi app khởi động ───────────────────────
 
 export async function loadAllData(): Promise<void> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Supabase timeout sau 8 giây')), 8000)
+  );
+
   const [
     { data: lessonsData,    error: le },
     { data: challengesData, error: ce },
     { data: usersData,      error: ue },
     { data: questionsData,  error: qe },
-  ] = await Promise.all([
-    supabase.from('lessons').select('*').order('sort_order'),
-    supabase.from('challenges').select('*').order('sort_order'),
-    supabase.from('users').select('*').order('created_at'),
-    supabase.from('questions').select('*').order('sort_order'),
+  ] = await Promise.race([
+    Promise.all([
+      supabase.from('lessons').select('*').order('sort_order'),
+      supabase.from('challenges').select('*').order('sort_order'),
+      supabase.from('users').select('*').order('created_at'),
+      supabase.from('questions').select('*').order('sort_order'),
+    ]),
+    timeout,
   ]);
 
   if (le) console.error('Lỗi load lessons:',    le.message);
@@ -274,7 +281,7 @@ export function getUsers(): User[] {
 }
 
 export async function saveUsers(users: User[]): Promise<void> {
-  if (users.length === 0) return; // ✅ Bảo vệ: không xóa toàn bộ khi array rỗng
+  if (users.length === 0) return;
 
   _users = users;
   const rows = users.map(u => ({
@@ -289,7 +296,6 @@ export async function saveUsers(users: User[]): Promise<void> {
   const { error } = await supabase.from('users').upsert(rows, { onConflict: 'id' });
   if (error) throw new Error('Lỗi lưu users: ' + error.message);
 
-  // ✅ Chỉ xóa user bị remove khi có đủ data (tránh xóa sạch)
   const keepIds = users.map(u => u.id);
   if (keepIds.length > 0) {
     const { error: delErr } = await supabase
@@ -298,4 +304,60 @@ export async function saveUsers(users: User[]): Promise<void> {
       .not('id', 'in', `(${keepIds.join(',')})`);
     if (delErr) console.warn('Không xóa được user cũ:', delErr.message);
   }
+}
+
+// ─── Callback để App.tsx nhận thông báo khi sao thay đổi ──────────────────────
+type StarsChangedCb = (userId: string, newStars: number) => void;
+let _onStarsChanged: StarsChangedCb | null = null;
+export function onStarsChanged(cb: StarsChangedCb) { _onStarsChanged = cb; }
+
+/**
+ * Điểm đến duy nhất để thay đổi số sao học sinh.
+ * Optimistic: cập nhật cache ngay → sync Supabase ngầm → rollback nếu lỗi.
+ */
+export async function awardStars(
+  userId: string,
+  delta: number,
+  reason: string = 'unknown'
+): Promise<{ ok: boolean; newStars: number }> {
+  const user = _users.find(u => u.id === userId);
+  if (!user) return { ok: false, newStars: 0 };
+
+  const oldStars = user.stars ?? 0;
+  const newStars = Math.max(0, oldStars + delta);
+
+  // 1. Cập nhật cache ngay (optimistic)
+  user.stars = newStars;
+  _onStarsChanged?.(userId, newStars);
+
+  // 2. Sync lên Supabase ngầm
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ stars: newStars })
+      .eq('id', userId);
+
+    if (error) throw error;
+    return { ok: true, newStars };
+  } catch (err) {
+    // Rollback nếu Supabase lỗi
+    user.stars = oldStars;
+    _onStarsChanged?.(userId, oldStars);
+    console.error(`awardStars rollback [${reason}]:`, err);
+    return { ok: false, newStars: oldStars };
+  }
+}
+
+/** Load sao của 1 user từ Supabase (gọi khi login) */
+export async function fetchUserStars(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('stars')
+    .eq('id', userId)
+    .single();
+  if (error || !data) return _users.find(u => u.id === userId)?.stars ?? 0;
+  // Cập nhật cache
+  const user = _users.find(u => u.id === userId);
+  if (user) user.stars = data.stars ?? 0;
+  return data.stars ?? 0;
 }

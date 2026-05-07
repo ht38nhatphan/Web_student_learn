@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, GameDef, ChallengeDef } from '../types';
 import Leaderboard from './Leaderboard';
-import { LogOut, ChevronLeft, PlayCircle, CheckCircle, Lock } from 'lucide-react';
-import { getGames, getAppContent, getStoreData } from '../lib/store';
+import { LogOut, ChevronLeft, PlayCircle, CheckCircle, Lock, Flame, Volume2, VolumeX } from 'lucide-react';
+import { getGames, getAppContent, getStoreData, setStoreData } from '../lib/store';
+import { soundManager, playSound } from '../lib/sound';
 
 interface Props {
   user: User | null;
@@ -21,8 +22,77 @@ const THEME_COLORS: Record<string, { bg: string; border: string; text: string; s
   red:    { bg: 'bg-red-50',    border: 'border-red-300',    text: 'text-red-600',    shadow: 'shadow-red-100' },
 };
 
+function getGreeting(name: string) {
+  const h = new Date().getHours();
+  const time = h < 12 ? 'buổi sáng 🌞' : h < 18 ? 'buổi chiều ☀️' : 'buổi tối 🌙';
+  return `Chào ${time}, ${name}!`;
+}
+
+const MOTIVATIONS = [
+  'Hôm nay học thêm 10 phút nữa nhé 💪',
+  'Mỗi ngày học một chút, giỏi hắn một chút! 🌟',
+  'Kiến thức là kho báu, hãy khám phá! 🏆',
+  'Bạn đang tiến bộ từng ngày! 🚀',
+  'Cố lên, bạn làm được! 👏',
+];
+
+function getStreak(userId: string): number {
+  if (!userId) return 0;
+  const data = getStoreData<{ streak: number; lastDate: string }>(`hvtv_streak_${userId}`, { streak: 0, lastDate: '' });
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (data.lastDate === today) return data.streak;
+  if (data.lastDate === yesterday) return data.streak; // cưa tập streak
+  return 0;
+}
+
+function touchStreak(userId: string) {
+  if (!userId) return;
+  const key = `hvtv_streak_${userId}`;
+  const data = getStoreData<{ streak: number; lastDate: string }>(key, { streak: 0, lastDate: '' });
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (data.lastDate === today) return;
+  const newStreak = data.lastDate === yesterday ? data.streak + 1 : 1;
+  setStoreData(key, { streak: newStreak, lastDate: today });
+}
+
 export default function StudentHome({ user, onLogout, onSelectChallenge, initialLesson }: Props) {
   const [selectedLesson, setSelectedLesson] = useState<GameDef | null>(initialLesson ?? null);
+  const [streak, setStreak] = useState(0);
+  const [muted, setMuted] = useState(soundManager.isMuted);
+  const [bgOn, setBgOn] = useState(false);
+  const motivation = useMemo(() => MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)], []);
+
+  useEffect(() => {
+    if (user?.id) {
+      touchStreak(user.id);
+      setStreak(getStreak(user.id));
+    }
+  }, [user?.id]);
+
+  // Nhạc nền
+  useEffect(() => {
+    if (bgOn && !soundManager.isMuted) soundManager.startBGMusic();
+    else soundManager.stopBGMusic();
+    return () => soundManager.stopBGMusic();
+  }, [bgOn, muted]);
+
+  const toggleMute = () => {
+    const newMuted = soundManager.toggleMute();
+    setMuted(newMuted);
+    if (newMuted) setBgOn(false);
+  };
+
+  const handleLessonSelect = (game: GameDef) => {
+    playSound('lesson_open');
+    setSelectedLesson(game);
+  };
+
+  const handleChallengeSelect = (game: GameDef, challenge: ChallengeDef) => {
+    playSound('challenge_start');
+    onSelectChallenge(game, challenge);
+  };
 
   const gamesList = useMemo(() => getGames().filter(g => g.isActive !== false), []);
   const appContent = useMemo(() => getAppContent(), []);
@@ -72,7 +142,7 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(idx * 0.025, 0.8), type: 'spring', stiffness: 260, damping: 22 }}
-        onClick={() => setSelectedLesson(game)}
+        onClick={() => handleLessonSelect(game)}
         className="lesson-card group cursor-pointer select-none"
       >
         {isDone && (
@@ -113,10 +183,8 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
     if (!selectedLesson) return null;
     const colors = THEME_COLORS[selectedLesson.theme] || THEME_COLORS.blue;
     const challenges = appContent.challenges.filter(c => c.lessonId === selectedLesson.id);
-
     return (
       <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-        {/* Back header */}
         <header className="mb-8 flex items-center gap-4">
           <button
             onClick={() => setSelectedLesson(null)}
@@ -169,7 +237,7 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.06 }}
-                  onClick={() => !isCompleted && onSelectChallenge(selectedLesson, challenge)}
+                  onClick={() => !isCompleted && handleChallengeSelect(selectedLesson, challenge)}
                   className={`challenge-card ${isCompleted ? 'done' : 'group'}`}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -226,24 +294,34 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
     <div className="flex flex-1 overflow-hidden w-full">
       {/* Sidebar */}
       <aside className="hidden md:flex w-72 bg-white border-r-4 border-amber-100 p-5 flex-col gap-5 shrink-0 overflow-y-auto">
-        <Leaderboard />
+        <Leaderboard currentUserId={user?.id} />
 
+        {/* Âm thanh + Nhạc nền */}
+        <div className="flex gap-2">
+          <button onClick={toggleMute}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-slate-200 hover:border-slate-300 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+            {muted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-green-500" />}
+            {muted ? 'Bật âm' : 'Tắt âm'}
+          </button>
+          {!muted && (
+            <button onClick={() => setBgOn(v => !v)}
+              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-2xl border-2 text-xs font-bold transition-all ${
+                bgOn ? 'border-purple-300 bg-purple-50 text-purple-600' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+              }`}>
+              🎵 {bgOn ? 'Nhạc: Bật' : 'Nhạc: Tắt'}
+            </button>
+          )}
+        </div>
         {user?.role === 'student' && (
           <div className="bg-amber-50 p-4 rounded-2xl border-2 border-dashed border-amber-200">
             <p className="text-xs font-black uppercase text-amber-700 mb-3">🎯 Nhiệm vụ hôm nay</p>
             <div className="space-y-2 text-sm font-semibold text-slate-600">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" defaultChecked className="accent-amber-500 w-4 h-4 rounded" />
-                <span>Hoàn thành 1 thử thách</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="accent-amber-500 w-4 h-4 rounded" />
-                <span>Trả lời đúng 5 câu liên tiếp</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="accent-amber-500 w-4 h-4 rounded" />
-                <span>Ghép 4 cặp từ đúng</span>
-              </label>
+              {gamesList.slice(0, 3).map((g, i) => (
+                <label key={g.id} className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="accent-amber-500 w-4 h-4 rounded" />
+                  <span>Thử thách trong “{g.title.substring(0, 20)}”</span>
+                </label>
+              ))}
             </div>
           </div>
         )}
@@ -273,12 +351,32 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
         <AnimatePresence mode="wait">
           {!selectedLesson ? (
             <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {/* Header */}
+              {/* Header cá nhân hóa */}
               <header className="mb-6">
-                <p className="text-amber-500 font-black uppercase tracking-widest text-xs mb-1">Bộ Sách Cánh Diều</p>
-                <h2 className="text-3xl md:text-4xl font-black text-slate-800">
-                  Các Bài Học <span className="text-blue-600">Của Bạn</span>
-                </h2>
+                {user ? (
+                  <>
+                    <p className="text-amber-500 font-black uppercase tracking-widest text-xs mb-1">{getGreeting(user.name)}</p>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-800">
+                      Các Bài Học <span className="text-blue-600">Của Bạn</span>
+                    </h2>
+                    <p className="text-slate-400 text-sm font-medium mt-1">{motivation}</p>
+                    {streak > 0 && (
+                      <div className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-sm font-black ${
+                        streak >= 7 ? 'bg-amber-100 text-amber-600 animate-pulse' : 'bg-orange-50 text-orange-500'
+                      }`}>
+                        <Flame className="w-4 h-4" />
+                        {streak} ngày liên tiếp!
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-amber-500 font-black uppercase tracking-widest text-xs mb-1">Bộ Sách Cánh Diều</p>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-800">
+                      Các Bài Học <span className="text-blue-600">Của Bạn</span>
+                    </h2>
+                  </>
+                )}
               </header>
 
               {/* One unified grid */}
