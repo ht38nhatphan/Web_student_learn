@@ -1,0 +1,58 @@
+[
+  {
+    "id": "t1",
+    "name": "Cô Mai",
+    "role": "teacher",
+    "avatar": "👩‍🏫",
+    "color": "bg-purple-100 border-purple-400 text-purple-700",
+    "stars": 0
+  },
+  {
+    "id": "s1",
+    "name": "Nguyễn An",
+    "role": "student",
+    "avatar": "👦🏻",
+    "color": "bg-blue-100 border-blue-400 text-blue-700",
+    "stars": 1250
+  },
+  {
+    "id": "s2",
+    "name": "Trần Bình",
+    "role": "student",
+    "avatar": "👦🏽",
+    "color": "bg-green-100 border-green-400 text-green-700",
+    "stars": 980
+  },
+  {
+    "id": "s3",
+    "name": "Lê Chi",
+    "role": "student",
+    "avatar": "👧🏻",
+    "color": "bg-orange-100 border-orange-400 text-orange-700",
+    "stars": 1420
+  },
+  {
+    "id": "s4",
+    "name": "Phạm Duy",
+    "role": "student",
+    "avatar": "👦🏼",
+    "color": "bg-red-100 border-red-400 text-red-700",
+    "stars": 850
+  },
+  {
+    "id": "s5",
+    "name": "Hoàng Yến",
+    "role": "student",
+    "avatar": "👧🏽",
+    "color": "bg-pink-100 border-pink-400 text-pink-700",
+    "stars": 1100
+  },
+  {
+    "id": "guest_1778090914807",
+    "name": "Học sinh mới",
+    "role": "student",
+    "avatar": "👧🏼",
+    "color": "bg-blue-100 border-blue-400 text-blue-700",
+    "stars": 0
+  }
+]

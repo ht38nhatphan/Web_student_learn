@@ -1,0 +1,814 @@
+{
+  "fillblank": {
+    "g1": [
+      {
+        "id": "1",
+        "sentenceBefore": "Con ",
+        "sentenceAfter": "á bơi dưới nước.",
+        "options": [
+          "c",
+          "k"
+        ],
+        "answer": "c"
+      }
+    ],
+    "g2": [
+      {
+        "id": "2",
+        "sentenceBefore": "Cái ",
+        "sentenceAfter": "ế gỗ rất đẹp.",
+        "options": [
+          "g",
+          "gh"
+        ],
+        "answer": "gh"
+      }
+    ],
+    "g3": [
+      {
+        "id": "3",
+        "sentenceBefore": "Bạn Lan đang ",
+        "sentenceAfter": "ỉ ngơi.",
+        "options": [
+          "ng",
+          "ngh"
+        ],
+        "answer": "ngh"
+      }
+    ],
+    "g12": [
+      {
+        "id": "4",
+        "sentenceBefore": "Mẹ mua cho em quả bưởi rất to r",
+        "sentenceAfter": "i.",
+        "options": [
+          "ồ",
+          "ỗ"
+        ],
+        "answer": "ồ"
+      }
+    ],
+    "g17": [
+      {
+        "id": "5",
+        "sentenceBefore": "Bầu ",
+        "sentenceAfter": "ời trong xanh.",
+        "options": [
+          "tr",
+          "ch"
+        ],
+        "answer": "tr"
+      }
+    ],
+    "g18": [
+      {
+        "id": "6",
+        "sentenceBefore": "Dòng ",
+        "sentenceAfter": "ông chảy xiết.",
+        "options": [
+          "s",
+          "x"
+        ],
+        "answer": "s"
+      }
+    ],
+    "g21": [
+      {
+        "id": "7",
+        "sentenceBefore": "Trời mưa ",
+        "sentenceAfter": "ó rít từng cơn.",
+        "options": [
+          "gi",
+          "d",
+          "r"
+        ],
+        "answer": "gi"
+      }
+    ],
+    "g22": [
+      {
+        "id": "8",
+        "sentenceBefore": "Bé ",
+        "sentenceAfter": "o cơm giúp mẹ.",
+        "options": [
+          "l",
+          "n"
+        ],
+        "answer": "n"
+      }
+    ],
+    "g27": [
+      {
+        "id": "9",
+        "sentenceBefore": "Em nhảy dây rất ",
+        "sentenceAfter": ".",
+        "options": [
+          "vui",
+          "vúy"
+        ],
+        "answer": "vui"
+      }
+    ],
+    "g32": [
+      {
+        "id": "10",
+        "sentenceBefore": "Hòn đảo thật xa x",
+        "sentenceAfter": ".",
+        "options": [
+          "ôi",
+          "ơi",
+          "ui"
+        ],
+        "answer": "ôi"
+      }
+    ],
+    "g37": [
+      {
+        "id": "11",
+        "sentenceBefore": "Tuyết rơi trắng x",
+        "sentenceAfter": ".",
+        "options": [
+          "óa",
+          "oá",
+          "oa"
+        ],
+        "answer": "óa"
+      }
+    ],
+    "g41": [
+      {
+        "id": "12",
+        "sentenceBefore": "Công chúa sống trong lâu đ",
+        "sentenceAfter": ".",
+        "options": [
+          "ài",
+          "ầy",
+          "áp"
+        ],
+        "answer": "ài"
+      }
+    ],
+    "g42": [
+      {
+        "id": "13",
+        "sentenceBefore": "Con bò kêu rống ",
+        "sentenceAfter": "ên.",
+        "options": [
+          "n",
+          "l"
+        ],
+        "answer": "l"
+      }
+    ],
+    "g46": [
+      {
+        "id": "14",
+        "sentenceBefore": "Ngôi sao sáng lấp l",
+        "sentenceAfter": "nh.",
+        "options": [
+          "á",
+          "ả",
+          "ã"
+        ],
+        "answer": "á"
+      }
+    ]
+  },
+  "matchword": {
+    "g4": [
+      [
+        {
+          "id": "1",
+          "left": "Thầy",
+          "right": "giáo"
+        },
+        {
+          "id": "2",
+          "left": "Học",
+          "right": "sinh"
+        },
+        {
+          "id": "3",
+          "left": "Sách",
+          "right": "vở"
+        },
+        {
+          "id": "4",
+          "left": "Bút",
+          "right": "chì"
+        }
+      ]
+    ],
+    "g5": [
+      [
+        {
+          "id": "5",
+          "left": "Ông",
+          "right": "bà"
+        },
+        {
+          "id": "6",
+          "left": "Cha",
+          "right": "mẹ"
+        },
+        {
+          "id": "7",
+          "left": "Anh",
+          "right": "chị"
+        },
+        {
+          "id": "8",
+          "left": "Con",
+          "right": "cháu"
+        }
+      ]
+    ],
+    "g10": [
+      [
+        {
+          "id": "9",
+          "left": "Cao",
+          "right": "Thấp"
+        },
+        {
+          "id": "10",
+          "left": "Nhanh",
+          "right": "Chậm"
+        },
+        {
+          "id": "11",
+          "left": "Vui",
+          "right": "Buồn"
+        },
+        {
+          "id": "12",
+          "left": "Lớn",
+          "right": "Bé"
+        }
+      ]
+    ],
+    "g11": [
+      [
+        {
+          "id": "13",
+          "left": "Chăm chỉ",
+          "right": "Siêng năng"
+        },
+        {
+          "id": "14",
+          "left": "Lười biếng",
+          "right": "Lười nhác"
+        },
+        {
+          "id": "15",
+          "left": "To lớn",
+          "right": "Khổng lồ"
+        },
+        {
+          "id": "16",
+          "left": "Xinh xắn",
+          "right": "Đẹp đẽ"
+        }
+      ]
+    ],
+    "g24": [
+      [
+        {
+          "id": "17",
+          "left": "Tiếng",
+          "right": "Việt"
+        },
+        {
+          "id": "18",
+          "left": "Toán",
+          "right": "học"
+        },
+        {
+          "id": "19",
+          "left": "Thể",
+          "right": "dục"
+        },
+        {
+          "id": "20",
+          "left": "Mỹ",
+          "right": "thuật"
+        }
+      ]
+    ],
+    "g25": [
+      [
+        {
+          "id": "21",
+          "left": "Mùa",
+          "right": "xuân"
+        },
+        {
+          "id": "22",
+          "left": "Mùa",
+          "right": "hè"
+        },
+        {
+          "id": "23",
+          "left": "Mùa",
+          "right": "thu"
+        },
+        {
+          "id": "24",
+          "left": "Mùa",
+          "right": "đông"
+        }
+      ]
+    ],
+    "g30": [
+      [
+        {
+          "id": "25",
+          "left": "Cái",
+          "right": "bàn"
+        },
+        {
+          "id": "26",
+          "left": "Chiếc",
+          "right": "ghế"
+        },
+        {
+          "id": "27",
+          "left": "Cái",
+          "right": "giường"
+        },
+        {
+          "id": "28",
+          "left": "Chiếc",
+          "right": "tủ"
+        }
+      ]
+    ],
+    "g33": [
+      [
+        {
+          "id": "29",
+          "left": "Nước",
+          "right": "chảy"
+        },
+        {
+          "id": "30",
+          "left": "Suối",
+          "right": "reo"
+        },
+        {
+          "id": "31",
+          "left": "Cá",
+          "right": "bơi"
+        },
+        {
+          "id": "32",
+          "left": "Chim",
+          "right": "hót"
+        }
+      ]
+    ],
+    "g39": [
+      [
+        {
+          "id": "33",
+          "left": "Cá",
+          "right": "heo"
+        },
+        {
+          "id": "34",
+          "left": "Rùa",
+          "right": "biển"
+        },
+        {
+          "id": "35",
+          "left": "San",
+          "right": "hô"
+        },
+        {
+          "id": "36",
+          "left": "Ngôi",
+          "right": "sao biển"
+        }
+      ]
+    ],
+    "g43": [
+      [
+        {
+          "id": "37",
+          "left": "Chim",
+          "right": "cánh cụt"
+        },
+        {
+          "id": "38",
+          "left": "Bắc",
+          "right": "cực"
+        },
+        {
+          "id": "39",
+          "left": "Tảng",
+          "right": "băng"
+        },
+        {
+          "id": "40",
+          "left": "Trượt",
+          "right": "tuyết"
+        }
+      ]
+    ],
+    "g47": [
+      [
+        {
+          "id": "41",
+          "left": "Tàu",
+          "right": "vũ trụ"
+        },
+        {
+          "id": "42",
+          "left": "Hành",
+          "right": "tinh"
+        },
+        {
+          "id": "43",
+          "left": "Giải",
+          "right": "ngân hà"
+        },
+        {
+          "id": "44",
+          "left": "Phi",
+          "right": "hành gia"
+        }
+      ]
+    ]
+  },
+  "multiplechoice": {
+    "g6": [
+      {
+        "id": "1",
+        "question": "Nhân vật chính trong bài 'Ngày khai trường' là ai?",
+        "options": [
+          "Bạn Tuấn",
+          "Bạn Lan",
+          "Bạn Minh Hến"
+        ],
+        "answer": "Bạn Minh Hến"
+      }
+    ],
+    "g13": [
+      {
+        "id": "2",
+        "question": "Từ nào sau đây là từ chỉ sự vật?",
+        "options": [
+          "Chạy nhảy",
+          "Trường học",
+          "Vui vẻ"
+        ],
+        "answer": "Trường học"
+      }
+    ],
+    "g14": [
+      {
+        "id": "3",
+        "question": "Từ nào sau đây là từ chỉ hoạt động?",
+        "options": [
+          "Hát hò",
+          "Con mèo",
+          "Đỏ thắm"
+        ],
+        "answer": "Hát hò"
+      }
+    ],
+    "g15": [
+      {
+        "id": "4",
+        "question": "Câu nào dưới đây có sử dụng biện pháp nhân hóa?",
+        "options": [
+          "Ông mặt trời đạp xe qua đỉnh núi.",
+          "Trời hôm nay rất nắng.",
+          "Hoa hồng tỏa hương thơm ngát."
+        ],
+        "answer": "Ông mặt trời đạp xe qua đỉnh núi."
+      }
+    ],
+    "g16": [
+      {
+        "id": "5",
+        "question": "Từ nào chỉ đặc điểm của mái tóc?",
+        "options": [
+          "Mượt mà",
+          "Đi lại",
+          "Chiếc lược"
+        ],
+        "answer": "Mượt mà"
+      }
+    ],
+    "g19": [
+      {
+        "id": "6",
+        "question": "Đâu là câu sử dụng dấu phẩy đúng?",
+        "options": [
+          "Sáng nay trăng, rất sáng.",
+          "Sáng nay, trăng rất sáng.",
+          "Sáng, nay trăng rất sáng."
+        ],
+        "answer": "Sáng nay, trăng rất sáng."
+      }
+    ],
+    "g23": [
+      {
+        "id": "7",
+        "question": "Từ nào sau đây chỉ tình cảm?",
+        "options": [
+          "Yêu thương",
+          "Chạy bộ",
+          "Quyển sách"
+        ],
+        "answer": "Yêu thương"
+      }
+    ],
+    "g28": [
+      {
+        "id": "8",
+        "question": "Câu 'Hôm nay trời đẹp quá' kết thúc bằng dấu gì?",
+        "options": [
+          "Dấu chấm hỏi (?)",
+          "Dấu chấm than (!)",
+          "Dấu chấm (.)"
+        ],
+        "answer": "Dấu chấm than (!)"
+      }
+    ],
+    "g29": [
+      {
+        "id": "9",
+        "question": "Mùa xuân bắt đầu từ tháng mấy?",
+        "options": [
+          "Tháng 1",
+          "Tháng 5",
+          "Tháng 9"
+        ],
+        "answer": "Tháng 1"
+      }
+    ],
+    "g31": [
+      {
+        "id": "10",
+        "question": "Cây nào thường mọc ở rừng thông?",
+        "options": [
+          "Cây bàng",
+          "Cây thông",
+          "Cây cau"
+        ],
+        "answer": "Cây thông"
+      }
+    ],
+    "g35": [
+      {
+        "id": "11",
+        "question": "Con vật nào hay sống trong hang động?",
+        "options": [
+          "Con chó",
+          "Con dơi",
+          "Con cá"
+        ],
+        "answer": "Con dơi"
+      }
+    ],
+    "g38": [
+      {
+        "id": "12",
+        "question": "Câu nào dưới đây có biện pháp nhân hóa?",
+        "options": [
+          "Mặt trời mỉm cười.",
+          "Trời hôm nay rất nóng.",
+          "Mây trôi trên bầu trời."
+        ],
+        "answer": "Mặt trời mỉm cười."
+      }
+    ],
+    "g40": [
+      {
+        "id": "13",
+        "question": "Từ đồng nghĩa với 'bao la' là gì?",
+        "options": [
+          "Nhỏ xíu",
+          "Mênh mông",
+          "Cao vút"
+        ],
+        "answer": "Mênh mông"
+      }
+    ],
+    "g44": [
+      {
+        "id": "14",
+        "question": "Từ trái nghĩa với 'nóng' là gì?",
+        "options": [
+          "Lạnh",
+          "Ấm",
+          "Mát"
+        ],
+        "answer": "Lạnh"
+      }
+    ],
+    "g48": [
+      {
+        "id": "15",
+        "question": "Thú rừng nào sau đây biết gầm?",
+        "options": [
+          "Con thỏ",
+          "Con hổ",
+          "Con hươu"
+        ],
+        "answer": "Con hổ"
+      }
+    ],
+    "g50": [
+      {
+        "id": "16",
+        "question": "Xe lửa chạy trên đâu?",
+        "options": [
+          "Đường ray",
+          "Đường cao tốc",
+          "Biển"
+        ],
+        "answer": "Đường ray"
+      }
+    ]
+  },
+  "reorder": {
+    "g7": [
+      {
+        "id": "1",
+        "words": [
+          "là",
+          "Em",
+          "sinh",
+          "lớp 2",
+          "học"
+        ],
+        "correctOrder": [
+          "Em",
+          "là",
+          "học",
+          "sinh",
+          "lớp 2"
+        ]
+      }
+    ],
+    "g8": [
+      {
+        "id": "2",
+        "words": [
+          "đang",
+          "sân",
+          "chơi",
+          "trên",
+          "Nam",
+          "bóng"
+        ],
+        "correctOrder": [
+          "Nam",
+          "đang",
+          "chơi",
+          "bóng",
+          "trên",
+          "sân"
+        ]
+      }
+    ],
+    "g9": [
+      {
+        "id": "3",
+        "words": [
+          "rất",
+          "đẹp",
+          "Bông",
+          "hồng",
+          "hoa",
+          "này"
+        ],
+        "correctOrder": [
+          "Bông",
+          "hoa",
+          "hồng",
+          "này",
+          "rất",
+          "đẹp"
+        ]
+      }
+    ],
+    "g20": [
+      {
+        "id": "4",
+        "words": [
+          "Bạn",
+          "mến,",
+          "yêu",
+          "Lan"
+        ],
+        "correctOrder": [
+          "Bạn",
+          "Lan",
+          "yêu",
+          "mến,"
+        ]
+      }
+    ],
+    "g26": [
+      {
+        "id": "5",
+        "words": [
+          "trường",
+          "ngôi",
+          "yêu",
+          "Em",
+          "của",
+          "em"
+        ],
+        "correctOrder": [
+          "Em",
+          "yêu",
+          "ngôi",
+          "trường",
+          "của",
+          "em"
+        ]
+      }
+    ],
+    "g34": [
+      {
+        "id": "6",
+        "words": [
+          "núi",
+          "rất",
+          "Ngọn",
+          "cao"
+        ],
+        "correctOrder": [
+          "Ngọn",
+          "núi",
+          "rất",
+          "cao"
+        ]
+      }
+    ],
+    "g36": [
+      {
+        "id": "7",
+        "words": [
+          "thấy",
+          "Em",
+          "nhìn",
+          "con",
+          "lạc đà"
+        ],
+        "correctOrder": [
+          "Em",
+          "nhìn",
+          "thấy",
+          "con",
+          "lạc đà"
+        ]
+      }
+    ],
+    "g45": [
+      {
+        "id": "8",
+        "words": [
+          "đông",
+          "phố",
+          "Thành",
+          "rất",
+          "đúc"
+        ],
+        "correctOrder": [
+          "Thành",
+          "phố",
+          "rất",
+          "đông",
+          "đúc"
+        ]
+      }
+    ],
+    "g49": [
+      {
+        "id": "9",
+        "words": [
+          "thế!",
+          "đẹp",
+          "Nông",
+          "thôn",
+          "quá"
+        ],
+        "correctOrder": [
+          "Nông",
+          "thôn",
+          "đẹp",
+          "quá",
+          "thế!"
+        ]
+      }
+    ]
+  },
+  "truefalse": {},
+  "typing": {}
+}

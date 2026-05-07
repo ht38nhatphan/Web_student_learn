@@ -1,0 +1,298 @@
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { User, GameDef, ChallengeDef } from '../types';
+import Leaderboard from './Leaderboard';
+import { LogOut, ChevronLeft, PlayCircle, CheckCircle, Lock } from 'lucide-react';
+import { getGames, getAppContent, getStoreData } from '../lib/store';
+
+interface Props {
+  user: User | null;
+  onLogout: () => void;
+  onSelectChallenge: (game: GameDef, challenge: ChallengeDef) => void;
+  initialLesson?: GameDef | null;
+}
+
+const THEME_COLORS: Record<string, { bg: string; border: string; text: string; shadow: string }> = {
+  blue:   { bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-600',   shadow: 'shadow-blue-100' },
+  orange: { bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-600', shadow: 'shadow-orange-100' },
+  green:  { bg: 'bg-green-50',  border: 'border-green-300',  text: 'text-green-600',  shadow: 'shadow-green-100' },
+  purple: { bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-600', shadow: 'shadow-purple-100' },
+  pink:   { bg: 'bg-pink-50',   border: 'border-pink-300',   text: 'text-pink-600',   shadow: 'shadow-pink-100' },
+  red:    { bg: 'bg-red-50',    border: 'border-red-300',    text: 'text-red-600',    shadow: 'shadow-red-100' },
+};
+
+export default function StudentHome({ user, onLogout, onSelectChallenge, initialLesson }: Props) {
+  const [selectedLesson, setSelectedLesson] = useState<GameDef | null>(initialLesson ?? null);
+
+  const gamesList = useMemo(() => getGames().filter(g => g.isActive !== false), []);
+  const appContent = useMemo(() => getAppContent(), []);
+
+  // Tính tổng điểm có thể kiếm từ 1 challenge (10 điểm/câu)
+  const getMaxStarsForChallenge = (challengeId: string) => {
+    return (
+      (appContent.multiplechoice?.[challengeId]?.length || 0) +
+      (appContent.fillblank?.[challengeId]?.length || 0) +
+      (appContent.matchword?.[challengeId]?.length || 0) +
+      (appContent.reorder?.[challengeId]?.length || 0) +
+      (appContent.truefalse?.[challengeId]?.length || 0) +
+      (appContent.typing?.[challengeId]?.length || 0)
+    ) * 10;
+  };
+
+  // Tính tổng điểm và điểm đã đạt của 1 bài học (tất cả thử thách)
+  const getLessonStats = (lessonId: string) => {
+    const challenges = appContent.challenges.filter(c => c.lessonId === lessonId);
+    let totalStars = 0;
+    let earnedStars = 0;
+    let totalQ = 0;
+    let doneQ = 0;
+    challenges.forEach(c => {
+      const maxQ =
+        (appContent.multiplechoice?.[c.id]?.length || 0) +
+        (appContent.fillblank?.[c.id]?.length || 0) +
+        (appContent.matchword?.[c.id]?.length || 0) +
+        (appContent.reorder?.[c.id]?.length || 0);
+      const prog = user ? getStoreData<{ completedIds: string[] }>(`hvtv_prog_${user.id}_${c.id}`, { completedIds: [] }) : { completedIds: [] };
+      totalStars += maxQ * 10;
+      earnedStars += prog.completedIds.length * 10;
+      totalQ += maxQ;
+      doneQ += prog.completedIds.length;
+    });
+    return { totalStars, earnedStars, totalQ, doneQ, isDone: totalQ > 0 && doneQ >= totalQ };
+  };
+
+  const renderLessonCard = (game: GameDef, idx: number) => {
+    const colors = THEME_COLORS[game.theme] || THEME_COLORS.blue;
+    const { totalStars, earnedStars, totalQ, doneQ, isDone } = getLessonStats(game.id);
+    const pct = totalQ > 0 ? Math.min(100, (doneQ / totalQ) * 100) : 0;
+
+    return (
+      <motion.div
+        key={game.id}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: Math.min(idx * 0.025, 0.8), type: 'spring', stiffness: 260, damping: 22 }}
+        onClick={() => setSelectedLesson(game)}
+        className="lesson-card group cursor-pointer select-none"
+      >
+        {isDone && (
+          <div className="absolute top-2.5 right-2.5 text-green-500 drop-shadow-sm">
+            <CheckCircle className="w-5 h-5" />
+          </div>
+        )}
+
+        {/* Icon */}
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl ${colors.bg} border-2 ${colors.border} group-hover:scale-110 transition-transform duration-200 shadow-sm`}>
+          {game.icon}
+        </div>
+
+        {/* Title */}
+        <h3 className="font-black text-sm text-slate-800 leading-snug line-clamp-2">{game.title}</h3>
+
+        {/* Stars */}
+        {totalStars > 0 && (
+          <div className={`flex items-center gap-1 text-xs font-black ${earnedStars > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
+            <span>⭐</span>
+            <span>{earnedStars > 0 ? `${earnedStars} / ${totalStars}` : `${totalStars} sao`}</span>
+          </div>
+        )}
+
+        {/* Progress bar */}
+        {totalQ > 0 && (
+          <div className="w-full">
+            <div className="progress-bar-track">
+              <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  const renderChallengesList = () => {
+    if (!selectedLesson) return null;
+    const colors = THEME_COLORS[selectedLesson.theme] || THEME_COLORS.blue;
+    const challenges = appContent.challenges.filter(c => c.lessonId === selectedLesson.id);
+
+    return (
+      <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+        {/* Back header */}
+        <header className="mb-8 flex items-center gap-4">
+          <button
+            onClick={() => setSelectedLesson(null)}
+            className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm shrink-0"
+          >
+            <ChevronLeft className="w-6 h-6 text-slate-600" />
+          </button>
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl ${colors.bg} border-2 ${colors.border} shrink-0`}>
+            {selectedLesson.icon}
+          </div>
+          <div>
+            <p className={`font-black uppercase tracking-widest text-xs mb-0.5 ${colors.text}`}>
+              {selectedLesson.description}
+            </p>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight">
+              {selectedLesson.title}
+            </h2>
+          </div>
+        </header>
+
+        {challenges.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center gap-3">
+            <Lock className="w-10 h-10 text-slate-300" />
+            <p className="text-slate-400 font-bold text-lg">Chưa có thử thách nào!</p>
+            <p className="text-slate-300 text-sm font-medium">Giáo viên sẽ thêm thử thách sớm nhé.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 max-w-2xl">
+            {challenges.map((challenge, idx) => {
+              const totalQ =
+                (appContent.multiplechoice?.[challenge.id]?.length || 0) +
+                (appContent.fillblank?.[challenge.id]?.length || 0) +
+                (appContent.matchword?.[challenge.id]?.length || 0) +
+                (appContent.reorder?.[challenge.id]?.length || 0) +
+                (appContent.truefalse?.[challenge.id]?.length || 0) +
+                (appContent.typing?.[challenge.id]?.length || 0);
+
+              const maxStars = totalQ * 10;
+              const progress = user
+                ? getStoreData<{ completedIds: string[] }>(`hvtv_prog_${user.id}_${challenge.id}`, { completedIds: [] })
+                : { completedIds: [] };
+              const doneQ = progress.completedIds.length;
+              const earnedStars = doneQ * 10;
+              const isCompleted = totalQ > 0 && doneQ >= totalQ;
+              const pct = totalQ > 0 ? Math.min(100, (doneQ / totalQ) * 100) : 0;
+
+              return (
+                <motion.div
+                  key={challenge.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.06 }}
+                  onClick={() => !isCompleted && onSelectChallenge(selectedLesson, challenge)}
+                  className={`challenge-card ${isCompleted ? 'done' : 'group'}`}
+                >
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    {/* Number */}
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 transition-transform
+                      ${isCompleted ? 'bg-green-100 text-green-600' : `${colors.bg} ${colors.text} group-hover:scale-110`}`}>
+                      {isCompleted ? '✅' : idx + 1}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                      <h3 className={`font-black text-base leading-tight ${isCompleted ? 'text-slate-500' : 'text-slate-800'}`}>
+                        {challenge.title}
+                      </h3>
+
+                      {/* Stars row */}
+                      {maxStars > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-amber-500">
+                            ⭐ {isCompleted ? earnedStars : maxStars} sao
+                            {!isCompleted && earnedStars > 0 && ` (đã đạt ${earnedStars})`}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Progress bar */}
+                      {totalQ > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="progress-bar-track flex-1">
+                            <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs font-bold text-slate-400 shrink-0">{doneQ}/{totalQ} câu</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {isCompleted ? (
+                    <span className="shrink-0 px-3 py-1.5 rounded-xl bg-green-100 text-green-700 font-black text-xs uppercase tracking-wide">
+                      Hoàn thành
+                    </span>
+                  ) : (
+                    <PlayCircle className={`w-9 h-9 shrink-0 text-slate-200 group-hover:${colors.text} transition-colors`} />
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="flex flex-1 overflow-hidden w-full">
+      {/* Sidebar */}
+      <aside className="hidden md:flex w-72 bg-white border-r-4 border-amber-100 p-5 flex-col gap-5 shrink-0 overflow-y-auto">
+        <Leaderboard />
+
+        {user?.role === 'student' && (
+          <div className="bg-amber-50 p-4 rounded-2xl border-2 border-dashed border-amber-200">
+            <p className="text-xs font-black uppercase text-amber-700 mb-3">🎯 Nhiệm vụ hôm nay</p>
+            <div className="space-y-2 text-sm font-semibold text-slate-600">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" defaultChecked className="accent-amber-500 w-4 h-4 rounded" />
+                <span>Hoàn thành 1 thử thách</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="accent-amber-500 w-4 h-4 rounded" />
+                <span>Trả lời đúng 5 câu liên tiếp</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="accent-amber-500 w-4 h-4 rounded" />
+                <span>Ghép 4 cặp từ đúng</span>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {user ? (
+          <button
+            onClick={onLogout}
+            className="mt-auto flex items-center gap-2 text-slate-400 justify-center hover:text-red-500 transition-colors py-2 font-bold text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Đăng xuất</span>
+          </button>
+        ) : (
+          <p className="text-xs text-center text-slate-400 mt-auto font-bold px-2 leading-relaxed">
+            Hãy đăng nhập để lưu tiến trình nhé! 🌟
+          </p>
+        )}
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        {/* Mobile leaderboard */}
+        <div className="mb-6 md:hidden">
+          <Leaderboard />
+        </div>
+
+        <AnimatePresence mode="wait">
+          {!selectedLesson ? (
+            <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {/* Header */}
+              <header className="mb-6">
+                <p className="text-amber-500 font-black uppercase tracking-widest text-xs mb-1">Bộ Sách Cánh Diều</p>
+                <h2 className="text-3xl md:text-4xl font-black text-slate-800">
+                  Các Bài Học <span className="text-blue-600">Của Bạn</span>
+                </h2>
+              </header>
+
+              {/* One unified grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                {gamesList.map((game, i) => renderLessonCard(game, i))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div key="challenges" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {renderChallengesList()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+}

@@ -1,0 +1,252 @@
+[
+  {
+    "id": "g1",
+    "lessonId": "g1",
+    "title": "Luyện c/k: Điền âm đầu sdđúng"
+  },
+  {
+    "id": "g2",
+    "lessonId": "g2",
+    "title": "Luyện g/gh: Chọn phụ âm phù hợp"
+  },
+  {
+    "id": "g3",
+    "lessonId": "g3",
+    "title": "Luyện ng/ngh: Nghe và điền"
+  },
+  {
+    "id": "g4",
+    "lessonId": "g4",
+    "title": "Nối từ về trường học"
+  },
+  {
+    "id": "g5",
+    "lessonId": "g5",
+    "title": "Ghép từ về gia đình"
+  },
+  {
+    "id": "g6",
+    "lessonId": "g6",
+    "title": "Trắc nghiệm đọc hiểu: Ngày khai trường"
+  },
+  {
+    "id": "g7",
+    "lessonId": "g7",
+    "title": "Sắp xếp câu: Ai là gì?"
+  },
+  {
+    "id": "g8",
+    "lessonId": "g8",
+    "title": "Sắp xếp câu: Ai làm gì?"
+  },
+  {
+    "id": "g9",
+    "lessonId": "g9",
+    "title": "Sắp xếp câu: Ai thế nào?"
+  },
+  {
+    "id": "g10",
+    "lessonId": "g10",
+    "title": "Nối từ trái nghĩa"
+  },
+  {
+    "id": "g11",
+    "lessonId": "g11",
+    "title": "Nối từ đồng nghĩa"
+  },
+  {
+    "id": "g12",
+    "lessonId": "g12",
+    "title": "Phân biệt dấu hỏi và dấu ngã"
+  },
+  {
+    "id": "g13",
+    "lessonId": "g13",
+    "title": "Nhận biết từ chỉ sự vật"
+  },
+  {
+    "id": "g14",
+    "lessonId": "g14",
+    "title": "Nhận biết từ chỉ hoạt động"
+  },
+  {
+    "id": "g15",
+    "lessonId": "g15",
+    "title": "Phát hiện biện pháp nhân hóa"
+  },
+  {
+    "id": "g16",
+    "lessonId": "g16",
+    "title": "Tìm từ chỉ đặc điểm"
+  },
+  {
+    "id": "g17",
+    "lessonId": "g17",
+    "title": "Điền ch hoặc tr vào chỗ trống"
+  },
+  {
+    "id": "g18",
+    "lessonId": "g18",
+    "title": "Điền s hoặc x vào chỗ trống"
+  },
+  {
+    "id": "g19",
+    "lessonId": "g19",
+    "title": "Chọn dấu câu thích hợp"
+  },
+  {
+    "id": "g20",
+    "lessonId": "g20",
+    "title": "Sắp xếp thứ tự bức thư"
+  },
+  {
+    "id": "g21",
+    "lessonId": "g21",
+    "title": "Điền d, gi hoặc r"
+  },
+  {
+    "id": "g22",
+    "lessonId": "g22",
+    "title": "Phân biệt l và n trong câu"
+  },
+  {
+    "id": "g23",
+    "lessonId": "g23",
+    "title": "Nhận biết từ chỉ tình cảm"
+  },
+  {
+    "id": "g24",
+    "lessonId": "g24",
+    "title": "Ghép tên các môn học"
+  },
+  {
+    "id": "g25",
+    "lessonId": "g25",
+    "title": "Ghép tên các mùa trong năm"
+  },
+  {
+    "id": "g26",
+    "lessonId": "g26",
+    "title": "Sắp xếp thành câu hoàn chỉnh"
+  },
+  {
+    "id": "g27",
+    "lessonId": "g27",
+    "title": "Phân biệt vần ui và uy"
+  },
+  {
+    "id": "g28",
+    "lessonId": "g28",
+    "title": "Chọn dấu câu: . ? !"
+  },
+  {
+    "id": "g29",
+    "lessonId": "g29",
+    "title": "Trắc nghiệm đọc hiểu Bài 2"
+  },
+  {
+    "id": "g30",
+    "lessonId": "g30",
+    "title": "Ghép tên đồ dùng trong nhà"
+  },
+  {
+    "id": "g31",
+    "lessonId": "g31",
+    "title": "Ải 1 – Khám phá Rừng Xanh"
+  },
+  {
+    "id": "g32",
+    "lessonId": "g32",
+    "title": "Ải 2 – Tìm kho báu Đảo Xa"
+  },
+  {
+    "id": "g33",
+    "lessonId": "g33",
+    "title": "Ải 3 – Vượt Suối Tiên"
+  },
+  {
+    "id": "g34",
+    "lessonId": "g34",
+    "title": "Ải 4 – Chinh phục Đỉnh Núi"
+  },
+  {
+    "id": "g35",
+    "lessonId": "g35",
+    "title": "Ải 5 – Giải mã Hang Động"
+  },
+  {
+    "id": "g36",
+    "lessonId": "g36",
+    "title": "Ải 6 – Băng qua Sa Mạc"
+  },
+  {
+    "id": "g37",
+    "lessonId": "g37",
+    "title": "Ải 7 – Vượt Tuyết Rơi"
+  },
+  {
+    "id": "g38",
+    "lessonId": "g38",
+    "title": "Ải 8 – Bay trên Bầu Trời"
+  },
+  {
+    "id": "g39",
+    "lessonId": "g39",
+    "title": "Ải 9 – Lặn Đáy Biển"
+  },
+  {
+    "id": "g40",
+    "lessonId": "g40",
+    "title": "Ải 10 – Dạo Đồng Cỏ xanh"
+  },
+  {
+    "id": "g41",
+    "lessonId": "g41",
+    "title": "Ải 11 – Phá cổng Lâu Đài"
+  },
+  {
+    "id": "g42",
+    "lessonId": "g42",
+    "title": "Ải 12 – Thăm Trang Trại"
+  },
+  {
+    "id": "g43",
+    "lessonId": "g43",
+    "title": "Ải 13 – Cùng Chim Cánh Cụt"
+  },
+  {
+    "id": "g44",
+    "lessonId": "g44",
+    "title": "Ải 14 – Thoát Núi Lửa"
+  },
+  {
+    "id": "g45",
+    "lessonId": "g45",
+    "title": "Ải 15 – Dạo phố Thành Phố"
+  },
+  {
+    "id": "g46",
+    "lessonId": "g46",
+    "title": "Ải 16 – Hái sao trên trời"
+  },
+  {
+    "id": "g47",
+    "lessonId": "g47",
+    "title": "Ải 17 – Du hành Vũ Trụ"
+  },
+  {
+    "id": "g48",
+    "lessonId": "g48",
+    "title": "Ải 18 – Vượt Rừng Mưa"
+  },
+  {
+    "id": "g49",
+    "lessonId": "g49",
+    "title": "Ải 19 – Thăm Nông Thôn"
+  },
+  {
+    "id": "g50",
+    "lessonId": "g50",
+    "title": "Ải 20 – Về Đích! 🏆"
+  }
+]

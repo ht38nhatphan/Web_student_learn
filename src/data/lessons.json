@@ -1,0 +1,452 @@
+[
+  {
+    "id": "g1",
+    "title": "Điền chữ dsc/kss",
+    "description": "Phân biệt âm c và kds",
+    "type": "fillblank",
+    "icon": "📝",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g2",
+    "title": "Điền chữ g/gh",
+    "description": "Phân biệt âm g và gh",
+    "type": "fillblank",
+    "icon": "✏️",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g3",
+    "title": "Điền chữ ng/ngh",
+    "description": "Phân biệt âm ng và ngh",
+    "type": "fillblank",
+    "icon": "🎯",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g4",
+    "title": "Ghép từ Trường học",
+    "description": "Từ ngữ về trường học",
+    "type": "matchword",
+    "icon": "🏫",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g5",
+    "title": "Ghép từ Gia đình",
+    "description": "Từ ngữ về gia đình",
+    "type": "matchword",
+    "icon": "🏡",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g6",
+    "title": "Đọc hiểu Bài 1",
+    "description": "Trắc nghiệm đọc hiểu",
+    "type": "multiplechoice",
+    "icon": "📖",
+    "theme": "red",
+    "isActive": true
+  },
+  {
+    "id": "g7",
+    "title": "Câu giới thiệu",
+    "description": "Sắp xếp câu (Ai là gì?)",
+    "type": "reorder",
+    "icon": "🧩",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g8",
+    "title": "Câu hoạt động",
+    "description": "Sắp xếp câu (Ai làm gì?)",
+    "type": "reorder",
+    "icon": "🏃",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g9",
+    "title": "Câu đặc điểm",
+    "description": "Sắp xếp câu (Ai thế nào?)",
+    "type": "reorder",
+    "icon": "🌟",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g10",
+    "title": "Từ trái nghĩa",
+    "description": "Tìm từ trái nghĩa",
+    "type": "matchword",
+    "icon": "↔️",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g11",
+    "title": "Từ đồng nghĩa",
+    "description": "Tìm từ đồng nghĩa",
+    "type": "matchword",
+    "icon": "🔄",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g12",
+    "title": "Dấu hỏi/ngã",
+    "description": "Phân biệt thanh hỏi, ngã",
+    "type": "fillblank",
+    "icon": "❓",
+    "theme": "red",
+    "isActive": true
+  },
+  {
+    "id": "g13",
+    "title": "Từ chỉ sự vật",
+    "description": "Nhận biết từ chỉ sự vật",
+    "type": "multiplechoice",
+    "icon": "🍎",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g14",
+    "title": "Từ chỉ hoạt động",
+    "description": "Nhận biết từ chỉ hoạt động",
+    "type": "multiplechoice",
+    "icon": "⚽",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g15",
+    "title": "Biện pháp nhân hóa",
+    "description": "Tìm câu có nhân hóa",
+    "type": "multiplechoice",
+    "icon": "✨",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g16",
+    "title": "Từ chỉ đặc điểm",
+    "description": "Nhận biết từ chỉ đặc điểm",
+    "type": "multiplechoice",
+    "icon": "🌈",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g17",
+    "title": "Phân biệt ch/tr",
+    "description": "Điền âm ch hoặc tr",
+    "type": "fillblank",
+    "icon": "🗣️",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g18",
+    "title": "Phân biệt s/x",
+    "description": "Điền âm s hoặc x",
+    "type": "fillblank",
+    "icon": "🎯",
+    "theme": "red",
+    "isActive": true
+  },
+  {
+    "id": "g19",
+    "title": "Dấu chấm/phẩy",
+    "description": "Chọn dấu câu thích hợp",
+    "type": "multiplechoice",
+    "icon": "✒️",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g20",
+    "title": "Viết thư",
+    "description": "Sắp xếp các phần của bức thư",
+    "type": "reorder",
+    "icon": "✉️",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g21",
+    "title": "Điền d/gi/r",
+    "description": "Phân biệt âm d, gi, r",
+    "type": "fillblank",
+    "icon": "🐾",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g22",
+    "title": "Điền l/n",
+    "description": "Phân biệt l và n",
+    "type": "fillblank",
+    "icon": "🌿",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g23",
+    "title": "Từ chỉ tình cảm",
+    "description": "Trắc nghiệm từ chỉ tình cảm",
+    "type": "multiplechoice",
+    "icon": "❤️",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g24",
+    "title": "Môn học",
+    "description": "Ghép tên môn học",
+    "type": "matchword",
+    "icon": "📚",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g25",
+    "title": "Các mùa",
+    "description": "Từ ngữ về mùa trong năm",
+    "type": "matchword",
+    "icon": "☀️",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g26",
+    "title": "Sắp xếp câu",
+    "description": "Sắp xếp từ thành câu có nghĩa",
+    "type": "reorder",
+    "icon": "📝",
+    "theme": "red",
+    "isActive": true
+  },
+  {
+    "id": "g27",
+    "title": "Điền ui/uy",
+    "description": "Phân biệt vần ui và uy",
+    "type": "fillblank",
+    "icon": "🧩",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g28",
+    "title": "Nhận biết dấu câu",
+    "description": "Dấu chấm, chấm hỏi, chấm than",
+    "type": "multiplechoice",
+    "icon": "❗",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g29",
+    "title": "Đọc hiểu Bài 2",
+    "description": "Trắc nghiệm đọc hiểu Bài 2",
+    "type": "multiplechoice",
+    "icon": "📖",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g30",
+    "title": "Đồ dùng trong nhà",
+    "description": "Ghép tên đồ vật trong nhà",
+    "type": "matchword",
+    "icon": "🏠",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g31",
+    "title": "Ải 1: Rừng Xanh",
+    "description": "Từ ngữ về cây cối",
+    "type": "multiplechoice",
+    "icon": "🌲",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g32",
+    "title": "Ải 2: Đảo Xa",
+    "description": "Kho báu từ láy",
+    "type": "fillblank",
+    "icon": "🏝️",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g33",
+    "title": "Ải 3: Suối Tiên",
+    "description": "Dòng chảy nối từ",
+    "type": "matchword",
+    "icon": "🌊",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g34",
+    "title": "Ải 4: Đỉnh Núi",
+    "description": "Thử thách sắp xếp câu",
+    "type": "reorder",
+    "icon": "⛰️",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g35",
+    "title": "Ải 5: Hang Động",
+    "description": "Giải mã từ vựng",
+    "type": "multiplechoice",
+    "icon": "🦇",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g36",
+    "title": "Ải 6: Sa Mạc",
+    "description": "Sắp xếp câu trong sa mạc",
+    "type": "reorder",
+    "icon": "🐪",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g37",
+    "title": "Ải 7: Tuyết Rơi",
+    "description": "Ngữ pháp mùa đông",
+    "type": "fillblank",
+    "icon": "❄️",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g38",
+    "title": "Ải 8: Bầu Trời",
+    "description": "So sánh và nhân hóa",
+    "type": "multiplechoice",
+    "icon": "☁️",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g39",
+    "title": "Ải 9: Đáy Biển",
+    "description": "Bắt cá ghép từ",
+    "type": "matchword",
+    "icon": "🐠",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g40",
+    "title": "Ải 10: Đồng Cỏ",
+    "description": "Từ đồng nghĩa",
+    "type": "multiplechoice",
+    "icon": "🌾",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g41",
+    "title": "Ải 11: Lâu Đài",
+    "description": "Hoàn thiện câu hỏi",
+    "type": "fillblank",
+    "icon": "🏰",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g42",
+    "title": "Ải 12: Trang Trại",
+    "description": "Phân biệt âm đầu l/n",
+    "type": "fillblank",
+    "icon": "🐄",
+    "theme": "red",
+    "isActive": true
+  },
+  {
+    "id": "g43",
+    "title": "Ải 13: Chim Cánh Cụt",
+    "description": "Hành động và tình cảm",
+    "type": "matchword",
+    "icon": "🐧",
+    "theme": "blue",
+    "isActive": true
+  },
+  {
+    "id": "g44",
+    "title": "Ải 14: Núi Lửa",
+    "description": "Từ trái nghĩa",
+    "type": "multiplechoice",
+    "icon": "🌋",
+    "theme": "red",
+    "isActive": true
+  },
+  {
+    "id": "g45",
+    "title": "Ải 15: Thành Phố",
+    "description": "Sắp xếp câu thành phố",
+    "type": "reorder",
+    "icon": "🏙️",
+    "theme": "pink",
+    "isActive": true
+  },
+  {
+    "id": "g46",
+    "title": "Ải 16: Ngôi Sao",
+    "description": "Tìm từ còn thiếu",
+    "type": "fillblank",
+    "icon": "⭐",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g47",
+    "title": "Ải 17: Vũ Trụ",
+    "description": "Kết nối từ vựng",
+    "type": "matchword",
+    "icon": "🚀",
+    "theme": "purple",
+    "isActive": true
+  },
+  {
+    "id": "g48",
+    "title": "Ải 18: Rừng Mưa",
+    "description": "Trả lời nhanh",
+    "type": "multiplechoice",
+    "icon": "🌧️",
+    "theme": "green",
+    "isActive": true
+  },
+  {
+    "id": "g49",
+    "title": "Ải 19: Nông Thôn",
+    "description": "Câu cảm thán",
+    "type": "reorder",
+    "icon": "🐓",
+    "theme": "orange",
+    "isActive": true
+  },
+  {
+    "id": "g50",
+    "title": "Ải 20: Về Đích 🏆",
+    "description": "Chuyến tàu về đích",
+    "type": "multiplechoice",
+    "icon": "🚂",
+    "theme": "blue",
+    "isActive": true
+  }
+]
