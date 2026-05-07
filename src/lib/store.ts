@@ -51,72 +51,16 @@ export async function loadAllData(): Promise<void> {
   if (ue) console.error('Lỗi load users:',      ue.message);
   if (qe) console.error('Lỗi load questions:',  qe.message);
 
-  // ── Lessons: dùng JSON fallback nếu Supabase trống ──────────────────────────
-  if (lessonsData && lessonsData.length > 0) {
-    _games = lessonsData.map(r => ({
-      id:          r.id,
-      title:       r.title,
-      description: r.description,
-      type:        r.type ?? 'fillblank',
-      icon:        r.icon,
-      theme:       r.theme,
-      isActive:    r.is_active,
-    }));
-  } else {
-    console.warn('Supabase lessons trống, dùng JSON fallback. Hãy chạy seed.sql!');
-    _games = lessonsJson as GameDef[];
-  }
+  const supabaseIsEmpty = !lessonsData || lessonsData.length === 0;
 
-  // ── Challenges: dùng JSON fallback nếu Supabase trống ────────────────────────
-  if (challengesData && challengesData.length > 0) {
-    _challenges = challengesData.map(r => ({
-      id:       r.id,
-      lessonId: r.lesson_id,
-      title:    r.title,
-    }));
-  } else {
-    _challenges = challengesJson as ChallengeDef[];
-  }
-
-  // ── Users: dùng JSON fallback nếu Supabase trống ─────────────────────────────
-  if (usersData && usersData.length > 0) {
-    _users = usersData.map(r => ({
-      id:     r.id,
-      name:   r.name,
-      role:   r.role,
-      avatar: r.avatar,
-      color:  r.color,
-      stars:  r.stars ?? 0,
-    }));
-  } else {
-    _users = usersJson as User[];
-  }
-
-  // ── Questions: rebuild structure { challengeId: [...] } ──────────────────────
-  if (questionsData && questionsData.length > 0) {
-    const fb: AppData['fillblank'] = {};
-    const mw: any = {};
-    const mc: AppData['multiplechoice'] = {};
-    const ro: AppData['reorder'] = {};
-    const tf: AppData['truefalse'] = {};
-    const ty: AppData['typing'] = {};
-
-    for (const q of questionsData) {
-      const cid = q.challenge_id;
-      switch (q.type) {
-        case 'fillblank':      if (!fb[cid]) fb[cid] = []; fb[cid].push(q.data); break;
-        case 'matchword':      if (!mw[cid]) mw[cid] = []; mw[cid].push(q.data); break;
-        case 'multiplechoice': if (!mc[cid]) mc[cid] = []; mc[cid].push(q.data); break;
-        case 'reorder':        if (!ro[cid]) ro[cid] = []; ro[cid].push(q.data); break;
-        case 'truefalse':      if (!tf[cid]) tf[cid] = []; tf[cid].push(q.data); break;
-        case 'typing':         if (!ty[cid]) ty[cid] = []; ty[cid].push(q.data); break;
-      }
-    }
-    _questions = { fillblank: fb, matchword: mw, multiplechoice: mc, reorder: ro, truefalse: tf, typing: ty };
-  } else {
-    // Dùng questions.json fallback
-    const qj = questionsJson as any;
-    _questions = {
+  if (supabaseIsEmpty) {
+    // ── Lần đầu: Supabase trống → tự động seed từ JSON ──────────────────────
+    console.info('🌱 Supabase trống. Đang tự động seed dữ liệu từ JSON...');
+    _games      = lessonsJson      as GameDef[];
+    _challenges = challengesJson   as ChallengeDef[];
+    _users      = usersJson        as User[];
+    const qj    = questionsJson    as any;
+    _questions  = {
       fillblank:      qj.fillblank      || {},
       matchword:      qj.matchword      || {},
       multiplechoice: qj.multiplechoice || {},
@@ -124,8 +68,87 @@ export async function loadAllData(): Promise<void> {
       truefalse:      qj.truefalse      || {},
       typing:         qj.typing         || {},
     };
+
+    // Seed lên Supabase theo thứ tự FK: lessons → users → challenges → questions
+    try {
+      // 1. Lessons
+      const lessonRows = _games.map((g, i) => ({
+        id: g.id, title: g.title, description: g.description,
+        type: g.type, icon: g.icon, theme: g.theme,
+        is_active: g.isActive ?? true, sort_order: i,
+      }));
+      await supabase.from('lessons').upsert(lessonRows, { onConflict: 'id' });
+
+      // 2. Users
+      const userRows = _users.map(u => ({
+        id: u.id, name: u.name, role: u.role,
+        avatar: u.avatar, color: u.color, stars: u.stars ?? 0,
+      }));
+      await supabase.from('users').upsert(userRows, { onConflict: 'id' });
+
+      // 3. Challenges (sau lessons vì có FK)
+      const challengeRows = _challenges.map((c, i) => ({
+        id: c.id, lesson_id: c.lessonId, title: c.title, sort_order: i,
+      }));
+      await supabase.from('challenges').upsert(challengeRows, { onConflict: 'id' });
+
+      // 4. Questions (sau challenges vì có FK)
+      const questionTypes = ['fillblank', 'matchword', 'multiplechoice', 'reorder', 'truefalse', 'typing'] as const;
+      const allQRows: any[] = [];
+      for (const type of questionTypes) {
+        const byChallenge = (_questions[type] as Record<string, any[]>) || {};
+        for (const [cid, qs] of Object.entries(byChallenge)) {
+          qs.forEach((q: any, i: number) => {
+            if (q?.id) allQRows.push({ id: q.id, challenge_id: cid, type, data: q, sort_order: i });
+          });
+        }
+      }
+      if (allQRows.length > 0) {
+        await supabase.from('questions').upsert(allQRows, { onConflict: 'id' });
+      }
+      console.info('✅ Seed hoàn thành! Supabase đã có đầy đủ dữ liệu.');
+    } catch (err) {
+      console.error('❌ Lỗi seed Supabase:', err);
+    }
+    return;
   }
+
+  // ── Supabase có dữ liệu → load bình thường ────────────────────────────────
+  _games = (lessonsData || []).map(r => ({
+    id: r.id, title: r.title, description: r.description,
+    type: r.type ?? 'fillblank', icon: r.icon, theme: r.theme, isActive: r.is_active,
+  }));
+
+  _challenges = (challengesData || []).map(r => ({
+    id: r.id, lessonId: r.lesson_id, title: r.title,
+  }));
+
+  _users = (usersData || []).map(r => ({
+    id: r.id, name: r.name, role: r.role,
+    avatar: r.avatar, color: r.color, stars: r.stars ?? 0,
+  }));
+
+  const fb: AppData['fillblank'] = {};
+  const mw: any = {};
+  const mc: AppData['multiplechoice'] = {};
+  const ro: AppData['reorder'] = {};
+  const tf: AppData['truefalse'] = {};
+  const ty: AppData['typing'] = {};
+
+  for (const q of questionsData || []) {
+    const cid = q.challenge_id;
+    switch (q.type) {
+      case 'fillblank':      if (!fb[cid]) fb[cid] = []; fb[cid].push(q.data); break;
+      case 'matchword':      if (!mw[cid]) mw[cid] = []; mw[cid].push(q.data); break;
+      case 'multiplechoice': if (!mc[cid]) mc[cid] = []; mc[cid].push(q.data); break;
+      case 'reorder':        if (!ro[cid]) ro[cid] = []; ro[cid].push(q.data); break;
+      case 'truefalse':      if (!tf[cid]) tf[cid] = []; tf[cid].push(q.data); break;
+      case 'typing':         if (!ty[cid]) ty[cid] = []; ty[cid].push(q.data); break;
+    }
+  }
+  _questions = { fillblank: fb, matchword: mw, multiplechoice: mc, reorder: ro, truefalse: tf, typing: ty };
 }
+
 
 // ─── Games / Lessons ──────────────────────────────────────────────────────────
 
