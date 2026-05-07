@@ -163,6 +163,11 @@ export function getGames(): GameDef[] {
   return _games;
 }
 
+export function getChallenges(lessonId?: string): ChallengeDef[] {
+  if (!lessonId) return _challenges;
+  return _challenges.filter(c => c.lessonId === lessonId);
+}
+
 export async function saveGames(games: GameDef[]): Promise<void> {
   if (games.length === 0) return; // ✅ Bảo vệ: không xóa toàn bộ khi array rỗng
 

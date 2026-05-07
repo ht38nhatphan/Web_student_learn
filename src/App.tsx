@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, ChevronLeft, LogOut } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -12,8 +12,9 @@ import LoginScreen from './components/LoginScreen';
 import TeacherDashboard from './components/TeacherDashboard';
 import StudentHome from './components/StudentHome';
 import LessonEngine from './components/LessonEngine';
+import StageBackground, { getPresetTheme } from './components/StageBackground';
 import { getStoreData, setStoreData, loadAllData, awardStars, fetchUserStars, onStarsChanged } from './lib/store';
-import { isSupabaseConfigured } from './lib/supabase';
+import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { initSound, soundManager } from './lib/sound';
 
 type AppState = 'login' | 'studentHome' | 'teacherHome' | 'playing' | 'celebration';
@@ -27,6 +28,7 @@ export default function App() {
   const [intendedChallenge, setIntendedChallenge] = useState<ChallengeDef | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  const [playingFrameUrl, setPlayingFrameUrl] = useState<string | null>(null);
 
   useEffect(() => {
     initSound();
@@ -61,6 +63,24 @@ export default function App() {
       });
     });
   }, []);
+
+  // Fetch frame GIF/preset từ DB khi bắt đầu chơi — PHẢI TRƯỚC mọi early return
+  useEffect(() => {
+    if (appState !== 'playing' || !activeChallenge) { setPlayingFrameUrl(null); return; }
+    const lessonId = activeChallenge.lessonId;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('lesson_gifs')
+          .select('url, lesson_id')
+          .eq('question_type', '__frame__')
+          .or(`lesson_id.eq.${lessonId},lesson_id.is.null`)
+          .order('lesson_id', { nullsFirst: false })
+          .limit(1);
+        setPlayingFrameUrl(data?.[0]?.url ?? null);
+      } catch { setPlayingFrameUrl(null); }
+    })();
+  }, [appState, activeChallenge?.lessonId]); // eslint-disable-line
 
   // Chưa sẵn sàng — hiển thị loading
   if (!appReady) {
@@ -165,8 +185,8 @@ export default function App() {
     setAppState('playing');
   };
 
-  const handleGameFinish = (gainedStars: number) => {
-    if (gainedStars > 0) addStars(gainedStars);
+  const handleGameFinish = (_gainedStars: number) => {
+    // Sao đã được cộng TỪNG CÂU trong LessonEngine.handleCheck → không cộng thêm ở đây
     setAppState('celebration');
     
     let count = 0;
@@ -186,7 +206,6 @@ export default function App() {
       clearInterval(interval);
       setAppState('studentHome');
       setActiveChallenge(null);
-      // activeGame is kept so StudentHome opens directly to the challenge list of this lesson
     }, 3500);
   };
 
@@ -306,14 +325,32 @@ export default function App() {
         />
       )}
 
-      {appState === 'playing' && (
-        <main className="flex-1 flex flex-col relative overflow-hidden z-0">
-          {/* Note: In Duolingo style, there are no stage backgrounds or header top bars, the Engine dictates the whole screen */}
-          <div className="flex-1 flex items-center justify-center relative z-10 overflow-y-auto">
-            {renderGameEngine()}
-          </div>
-        </main>
-      )}
+      {appState === 'playing' && (() => {
+        const presetTheme = playingFrameUrl ? getPresetTheme(playingFrameUrl) : null;
+        const hasCustomFrame = playingFrameUrl && !presetTheme;
+        return (
+          <main className="flex-1 flex flex-col relative overflow-hidden z-0">
+            {/* Frame: preset animation hoặc GIF ảnh */}
+            {presetTheme && <StageBackground theme={presetTheme} />}
+            {hasCustomFrame && <img src={playingFrameUrl!} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" />}
+            {/* Nếu không có frame từ DB → dùng playing-bg mặc định */}
+            {!playingFrameUrl && (
+              <div className="absolute inset-0 z-0 playing-bg">
+                <div className="playing-orb w-32 h-32 bg-white/20" style={{'--dur':'7s','--delay':'0s', top:'8%', left:'5%'} as React.CSSProperties} />
+                <div className="playing-orb w-20 h-20 bg-yellow-300/30" style={{'--dur':'5s','--delay':'1.2s', top:'20%', right:'8%'} as React.CSSProperties} />
+                <div className="playing-orb w-40 h-40 bg-pink-400/20" style={{'--dur':'9s','--delay':'0.5s', bottom:'10%', left:'12%'} as React.CSSProperties} />
+                {['⭐','🌟','✨','💫','⭐','🌟','✨','💫','⭐','✨'].map((s, i) => (
+                  <span key={i} className="playing-star select-none" style={{ top:`${10+(i*83%80)}%`, left:`${5+(i*97%90)}%`, fontSize:`${14+(i%3)*8}px`, '--dur':`${1.5+(i%4)*0.7}s`, '--delay':`${(i*0.3)%2}s` } as React.CSSProperties}>{s}</span>
+                ))}
+              </div>
+            )}
+            {/* Content */}
+            <div className="flex-1 flex items-center justify-center relative z-10 overflow-y-auto">
+              {renderGameEngine()}
+            </div>
+          </main>
+        );
+      })()}
 
       {appState === 'celebration' && (
          <main className="flex-1 flex items-center justify-center overflow-y-auto relative z-10 p-4 md:p-8 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500">

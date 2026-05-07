@@ -39,15 +39,11 @@ CREATE TRIGGER trg_lesson_gifs_updated_at
 -- 2. Row Level Security (RLS)
 ALTER TABLE lesson_gifs ENABLE ROW LEVEL SECURITY;
 
--- Cho phép tất cả đọc (học sinh xem GIF)
-CREATE POLICY "lesson_gifs: public read"
-  ON lesson_gifs FOR SELECT
-  USING (true);
-
--- Chỉ authenticated user (giáo viên) mới được write
-CREATE POLICY "lesson_gifs: auth write"
+-- Cho phép tất cả đọc và ghi (anon key — giống bảng lessons/challenges/questions)
+CREATE POLICY "lesson_gifs: public all"
   ON lesson_gifs FOR ALL
-  USING (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 -- 3. Thêm cột updated_at vào bảng users (nếu chưa có)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
@@ -87,20 +83,20 @@ ON CONFLICT (id) DO UPDATE SET
   allowed_mime_types = ARRAY['image/gif', 'image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
 -- Storage policies cho bucket lesson-gifs
--- Cho phép tất cả đọc file
+-- Cho phép tất cả đọc file (học sinh xem ảnh)
 CREATE POLICY "lesson-gifs: public read"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'lesson-gifs');
 
--- Chỉ authenticated user mới upload/xóa
-CREATE POLICY "lesson-gifs: auth upload"
+-- Cho phép tất cả upload/xóa (anon key — app dùng anon key)
+CREATE POLICY "lesson-gifs: public insert"
   ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'lesson-gifs' AND auth.role() = 'authenticated');
+  WITH CHECK (bucket_id = 'lesson-gifs');
 
-CREATE POLICY "lesson-gifs: auth delete"
+CREATE POLICY "lesson-gifs: public delete"
   ON storage.objects FOR DELETE
-  USING (bucket_id = 'lesson-gifs' AND auth.role() = 'authenticated');
+  USING (bucket_id = 'lesson-gifs');
 
-CREATE POLICY "lesson-gifs: auth update"
+CREATE POLICY "lesson-gifs: public update"
   ON storage.objects FOR UPDATE
-  USING (bucket_id = 'lesson-gifs' AND auth.role() = 'authenticated');
+  USING (bucket_id = 'lesson-gifs');

@@ -1,50 +1,46 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CheckCircle2, XCircle, Home, RotateCcw } from 'lucide-react';
+import { X, XCircle, CheckCircle2, Home, RotateCcw } from 'lucide-react';
 import { FillBlankQuestion, MatchPair, MultipleChoiceQuestion, ReorderQuestion, TrueFalseQuestion, TypingQuestion } from '../data/content';
 import { ChallengeDef } from '../types';
-import { getAppContent, getStoreData, setStoreData } from '../lib/store';
+import { getAppContent, getStoreData, setStoreData, awardStars } from '../lib/store';
 import { soundManager } from '../lib/sound';
+import { supabase } from '../lib/supabase';
+import StageBackground, { getPresetTheme } from './StageBackground';
 
-// ── Ảnh nền sống động theo loại câu hỏi ─────────────────────────────────────────
-// Dùng ảnh đẹp từ picsum.photos (stable seed), và emoji art ấn tượng
-const BG_BY_TYPE: Record<string, string[]> = {
+// ── Ảnh nền dự phòng (Unsplash) — dùng khi chưa có GIF từ Supabase
+const FALLBACK_BG: Record<string, string[]> = {
   multiplechoice: [
-    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=900&q=80', // students studying
-    'https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&q=80', // colorful pencils
-    'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=900&q=80', // books
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=900&q=80',
+    'https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&q=80',
+    'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=900&q=80',
   ],
   fillblank: [
-    'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=900&q=80', // writing
-    'https://images.unsplash.com/photo-1519791883288-dc8bd696e667?w=900&q=80', // pen and paper
-    'https://images.unsplash.com/photo-1517842645767-c639042777db?w=900&q=80', // notebook
+    'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=900&q=80',
+    'https://images.unsplash.com/photo-1519791883288-dc8bd696e667?w=900&q=80',
+    'https://images.unsplash.com/photo-1517842645767-c639042777db?w=900&q=80',
   ],
   matchword: [
-    'https://images.unsplash.com/photo-1555431189-0fabf2179ef9?w=900&q=80', // puzzle
-    'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=900&q=80', // colorful blocks
-    'https://images.unsplash.com/photo-1484820540004-14229fe36ca4?w=900&q=80', // shapes
+    'https://images.unsplash.com/photo-1555431189-0fabf2179ef9?w=900&q=80',
+    'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=900&q=80',
+    'https://images.unsplash.com/photo-1484820540004-14229fe36ca4?w=900&q=80',
   ],
   reorder: [
-    'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=900&q=80', // library
-    'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=900&q=80', // open book
-    'https://images.unsplash.com/photo-1474932430478-1e6ac2bf0375?w=900&q=80', // word game
+    'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=900&q=80',
+    'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=900&q=80',
   ],
   truefalse: [
-    'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=900&q=80', // checkmark
-    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&q=80', // quiz
-    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=900&q=80', // classroom
+    'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=900&q=80',
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&q=80',
   ],
   typing: [
-    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80', // keyboard
-    'https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=900&q=80', // letters
-    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=900&q=80', // writing desk
+    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80',
+    'https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=900&q=80',
   ],
 };
 
-function getBgImage(type: string, seed: number): string {
-  const pool = BG_BY_TYPE[type] || BG_BY_TYPE.multiplechoice;
-  return pool[seed % pool.length];
-}
+// Map: question_type -> URL[]
+type LessonBgs = Record<string, string[]>;
 
 type QuestionItem = 
   | { type: 'multiplechoice', data: MultipleChoiceQuestion }
@@ -70,6 +66,9 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dotColors, setDotColors] = useState<('none'|'correct'|'wrong')[]>([]);
 
+  // GIF từ Supabase theo lesson_id
+  const [lessonBgs, setLessonBgs] = useState<LessonBgs>({});
+
   // Game state
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState<string>('');
@@ -85,6 +84,45 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   const [correctCount, setCorrectCount] = useState(0);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [finalStars, setFinalStars] = useState(0);
+
+  // ── Load GIF từ Supabase theo lesson_id ──────────────────────────────
+  useEffect(() => {
+    const lessonId = challenge.lessonId;
+    (async () => {
+      try {
+        // Fetch cả GIF của bài học và GIF dùng chung (lesson_id IS NULL)
+        const { data } = await supabase
+          .from('lesson_gifs')
+          .select('url, question_type, challenge_id, lesson_id')
+          .or(`lesson_id.eq.${lessonId},lesson_id.is.null`);
+        if (!data || data.length === 0) return;
+        const map: LessonBgs = {};
+        data.forEach(row => {
+          const url: string = row.url || '';
+          if (!url) return;
+          if (row.question_type === '__frame__') return; // frame xử lý ở App.tsx
+          const key: string = row.challenge_id
+            ? `challenge:${row.challenge_id}`
+            : row.question_type || '__all__';
+          if (!map[key]) map[key] = [];
+          map[key].push(url);
+        });
+        setLessonBgs(map);
+      } catch { /* silent fail */ }
+    })();
+  }, [challenge.lessonId]); // eslint-disable-line
+
+  // ── Độ ưu tiên: challenge cụ thể > loại câu hỏi > bài dùng chung > fallback ──
+  const getActiveBg = (type: string, seed: number): string => {
+    const byChallenge = lessonBgs[`challenge:${challenge.id}`];
+    if (byChallenge && byChallenge.length > 0) return byChallenge[seed % byChallenge.length];
+    const specific = lessonBgs[type];
+    if (specific && specific.length > 0) return specific[seed % specific.length];
+    const generic = lessonBgs['__all__'];
+    if (generic && generic.length > 0) return generic[seed % generic.length];
+    const pool = FALLBACK_BG[type] || FALLBACK_BG.multiplechoice;
+    return pool[seed % pool.length];
+  };
 
   useEffect(() => {
     const data = getAppContent();
@@ -165,6 +203,9 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
       soundManager.play('correct');
       setTimeout(() => soundManager.play('star_gain'), 400);
 
+      // ✅ Cộng sao NGAY LẬP TỨC vào Supabase (không đợi cuối thử thách)
+      if (userId) awardStars(userId, 10, 'correct_answer');
+
       const progress = getStoreData<{ completedIds: string[] }>(`hvtv_prog_${userId}_${challenge.id}`, { completedIds: [] });
       let qid = currentItem.type === 'matchword' ? currentItem.data[0].id : currentItem.data.id;
       progress.completedIds.push(qid);
@@ -198,7 +239,8 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
       else soundManager.play('challenge_done');
       setFinalStars(gained);
       setShowEndScreen(true);
-      onComplete(gained);
+      // Sao đã được cộng từng câu ở handleCheck, chỉ gọi onComplete để trigger celebration
+      onComplete(0);
     }
   };
 
@@ -268,7 +310,9 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white rounded-3xl overflow-hidden shadow-xl mt-8 relative max-w-4xl mx-auto w-full">
+    <div className="flex-1 flex flex-col rounded-3xl overflow-hidden shadow-xl mt-8 relative max-w-4xl mx-auto w-full">
+      {/* Nội dung bên trong — bg trong suốt nhẹ để frame từ App.tsx lộ qua */}
+      <div className="relative z-10 flex-1 flex flex-col bg-white/90 backdrop-blur-sm">
       {/* Header — Dot Progress */}
       <div className="p-5 flex items-center gap-4 border-b-2 border-gray-100">
         <button onClick={onBack} className="text-gray-400 hover:text-gray-600"><X className="w-8 h-8" /></button>
@@ -294,9 +338,9 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         </AnimatePresence>
       </div>
 
-      {/* Content Area — với GIF background */}
+      {/* Content Area — với GIF nền câu hỏi (inner) */}
       <div className="flex-1 overflow-y-auto relative">
-        {/* Ảnh nền câu hỏi */}
+        {/* GIF nền câu hỏi — thay đổi theo từng câu, có blur */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex + '-bg'}
@@ -304,14 +348,14 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="absolute inset-0 bg-cover bg-center"
+            className="absolute inset-0 bg-cover bg-center z-[1]"
             style={{
-              backgroundImage: `url('${getBgImage(currentItem?.type ?? 'multiplechoice', currentIndex)}')`
+              backgroundImage: `url('${getActiveBg(currentItem?.type ?? 'multiplechoice', currentIndex)}')`
             }}
           />
         </AnimatePresence>
         {/* Overlay */}
-        <div className="absolute inset-0" style={{ background: 'rgba(255,255,255,0.87)', backdropFilter: 'blur(2px)' }} />
+        <div className="absolute inset-0 z-[2]" style={{ background: 'rgba(255,255,255,0.87)', backdropFilter: 'blur(2px)' }} />
 
         <div className="relative z-10 p-6 md:p-8 flex flex-col justify-center min-h-full">
         <AnimatePresence mode="wait">
@@ -598,6 +642,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
           {feedback === null ? 'KIỂM TRA' : (feedback === 'error' ? 'THỬ LẠI' : 'TIẾP TỤC')}
         </button>
       </div>
+      </div> {/* end inner content wrapper */}
     </div>
   );
 }
