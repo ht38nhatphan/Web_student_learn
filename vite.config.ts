@@ -17,14 +17,8 @@ export default defineConfig(({mode}) => {
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
-      proxy: {
-        '/api': {
-          target: 'http://localhost:3001',
-          changeOrigin: true,
-        },
-      },
+      // Không còn cần proxy /api vì dùng Supabase trực tiếp
       watch: {
-        // Không watch thư mục data để tránh HMR reload khi lưu JSON
         ignored: ['**/src/data/**'],
       },
     },

@@ -13,22 +13,25 @@ import TeacherDashboard from './components/TeacherDashboard';
 import StudentHome from './components/StudentHome';
 import LessonEngine from './components/LessonEngine';
 import { getStoreData, setStoreData, loadAllData } from './lib/store';
+import { isSupabaseConfigured } from './lib/supabase';
 
 type AppState = 'login' | 'studentHome' | 'teacherHome' | 'playing' | 'celebration';
 
 export default function App() {
-  const [appState, setAppState] = useState<AppState>('studentHome'); // Default to public home
+  const [appState, setAppState] = useState<AppState>('studentHome');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeGame, setActiveGame] = useState<GameDef | null>(null);
   const [activeChallenge, setActiveChallenge] = useState<ChallengeDef | null>(null);
   const [intendedGame, setIntendedGame] = useState<GameDef | null>(null);
   const [intendedChallenge, setIntendedChallenge] = useState<ChallengeDef | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
-    // Load all data from JSON files via API server
+    if (!isSupabaseConfigured) {
+      setAppReady(true); // chạy vào màn hình cấu hình
+      return;
+    }
     loadAllData()
       .then(() => {
         setAppReady(true);
@@ -39,7 +42,6 @@ export default function App() {
         }
       })
       .catch(() => {
-        // API server not running — app still works with in-memory defaults
         setAppReady(true);
         const savedUser = getStoreData<User | null>('hvtv_user', null);
         if (savedUser) {
@@ -49,12 +51,40 @@ export default function App() {
       });
   }, []);
 
+  // Chưa sẵn sàng — hiển thị loading
   if (!appReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-amber-50">
         <div className="text-center">
           <div className="text-6xl mb-4 animate-bounce">📚</div>
           <p className="text-2xl font-black text-slate-700">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Supabase chưa cấu hình — hiển thị hướng dẫn
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-amber-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full border-4 border-amber-200">
+          <div className="text-6xl text-center mb-4">⚙️</div>
+          <h1 className="text-2xl font-black text-center text-slate-800 mb-2">Chưa cấu hình Supabase</h1>
+          <p className="text-slate-500 text-center mb-6">Cần điền thông tin Supabase vào file <code className="bg-slate-100 px-2 py-0.5 rounded text-sm">.env.local</code></p>
+          <div className="bg-slate-900 text-green-400 rounded-2xl p-4 font-mono text-sm space-y-1">
+            <div className="text-gray-400"># .env.local</div>
+            <div>VITE_SUPABASE_URL=<span className="text-yellow-400">https://xxx.supabase.co</span></div>
+            <div>VITE_SUPABASE_ANON_KEY=<span className="text-yellow-400">eyJhbGci...</span></div>
+          </div>
+          <div className="mt-6 bg-blue-50 rounded-2xl p-4 text-sm text-blue-700">
+            <p className="font-bold mb-1">📋 Cách lấy thông tin:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Vào <strong>app.supabase.com</strong></li>
+              <li>Chọn project của bạn</li>
+              <li>Vào <strong>Settings → API</strong></li>
+              <li>Copy <strong>Project URL</strong> và <strong>anon public key</strong></li>
+            </ol>
+          </div>
         </div>
       </div>
     );
