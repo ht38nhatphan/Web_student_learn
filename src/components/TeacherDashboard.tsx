@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, GameDef } from '../types';
 import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X } from 'lucide-react';
-import { getGames, saveGames, getAppContent, saveAppContent, getUsers, saveUsers, getStoreData, setStoreData } from '../lib/store';
+import { getGames, saveGames, getAppContent, saveAppContent, deleteChallenge, getUsers, saveUsers, getStoreData, setStoreData } from '../lib/store';
 import { AppData } from '../data/content';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -67,7 +67,7 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
     index: number;
   } | null>(null);
 
-  const handleAddQuestion = (gameType: keyof AppData) => {
+  const handleAddQuestion = async (gameType: keyof AppData) => {
     if (!editingChallenge || !appContent) return;
     const newContent = { ...appContent };
     let newIndex = 0;
@@ -124,28 +124,28 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
     }
 
     setAppContent(newContent);
-    withSaving(() => saveAppContent(newContent));
+    await withSaving(() => saveAppContent(newContent));
     setEditingQuestionModal({ type: gameType, index: newIndex });
   };
 
-  const handleRemoveQuestion = (gameType: keyof AppData, index: number) => {
+  const handleRemoveQuestion = async (gameType: keyof AppData, index: number) => {
     if (!editingChallenge || !appContent) return;
     const newContent = { ...appContent };
     
     if ((newContent[gameType] as any)?.[editingChallenge]) {
       (newContent[gameType] as any)[editingChallenge].splice(index, 1);
       setAppContent(newContent);
-      withSaving(() => saveAppContent(newContent));
+      await withSaving(() => saveAppContent(newContent));
     }
   };
 
-  const updateQuestion = (gameType: keyof AppData, index: number, newQuestionData: any) => {
+  const updateQuestion = async (gameType: keyof AppData, index: number, newQuestionData: any) => {
     if (!editingChallenge || !appContent) return;
     const newContent = { ...appContent };
     if ((newContent[gameType] as any)?.[editingChallenge]) {
       (newContent[gameType] as any)[editingChallenge][index] = newQuestionData;
       setAppContent(newContent);
-      withSaving(() => saveAppContent(newContent));
+      await withSaving(() => saveAppContent(newContent));
     }
   };
 
@@ -513,15 +513,16 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                   <h2 className="text-3xl font-black text-[#1E293B]">Bài học: {editingGame.title}</h2>
                 </div>
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
                     const newContent = { ...appContent };
-                    newContent.challenges.push({
+                    const newChallenge = {
                       id: `c_${Date.now()}`,
                       lessonId: editingGame.id,
                       title: 'Thử thách mới'
-                    });
+                    };
+                    newContent.challenges = [...newContent.challenges, newChallenge];
                     setAppContent(newContent);
-                    saveAppContent(newContent);
+                    await withSaving(() => saveAppContent(newContent));
                   }}
                   className="bg-purple-600 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-purple-700 shadow-sm"
                 >
@@ -549,7 +550,7 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                              const cRef = newContent.challenges.find(c => c.id === challenge.id);
                              if (cRef) cRef.title = e.target.value;
                              setAppContent(newContent);
-                             saveAppContent(newContent);
+                             debouncedSaveContent(newContent);
                           }}
                           className="font-bold text-xl w-full border-b-2 border-transparent hover:border-gray-200 focus:outline-none focus:border-purple-400 font-sans"
                         />
@@ -557,12 +558,12 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                       <div className="text-sm text-gray-500 font-bold mb-2 uppercase">{qsCount} Câu hỏi</div>
                       <div className="flex gap-2 justify-end">
                         <button 
-                          onClick={() => {
-                            if(window.confirm('Xoá thử thách này?')) {
+                          onClick={async () => {
+                            if(window.confirm('Xoá thử thách này? Tất cả câu hỏi trong thử thách cũng sẽ bị xóa.')) {
+                              await withSaving(() => deleteChallenge(challenge.id));
                               const newContent = {...appContent};
                               newContent.challenges = newContent.challenges.filter(c => c.id !== challenge.id);
                               setAppContent(newContent);
-                              saveAppContent(newContent);
                             }
                           }}
                           className="p-2 text-red-400 hover:bg-red-50 rounded-lg flex-1 border-2 border-transparent focus:outline-none flex justify-center"

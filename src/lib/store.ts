@@ -179,14 +179,25 @@ export function getAppContent(): AppData {
   };
 }
 
+/** Xóa 1 thử thách khỏi Supabase (cascade xóa questions) + cập nhật cache */
+export async function deleteChallenge(challengeId: string): Promise<void> {
+  // Xóa questions của thử thách này trước (nếu không có ON DELETE CASCADE)
+  await supabase.from('questions').delete().eq('challenge_id', challengeId);
+  // Xóa thử thách
+  const { error } = await supabase.from('challenges').delete().eq('id', challengeId);
+  if (error) throw new Error('Lỗi xóa thử thách: ' + error.message);
+  // Cập nhật cache
+  _challenges = _challenges.filter(c => c.id !== challengeId);
+}
+
 export async function saveAppContent(data: AppData): Promise<void> {
   _challenges = data.challenges;
 
-  // Upsert challenges (chỉ thêm/sửa, không tự xóa)
+  // Upsert challenges — thêm/sửa, KHÔNG auto-delete (dùng deleteChallenge riêng)
   const challengeRows = data.challenges.map((c, i) => ({
-    id:        c.id,
-    lesson_id: c.lessonId,
-    title:     c.title,
+    id:         c.id,
+    lesson_id:  c.lessonId,
+    title:      c.title,
     sort_order: i,
   }));
   if (challengeRows.length > 0) {
@@ -194,14 +205,17 @@ export async function saveAppContent(data: AppData): Promise<void> {
     if (error) throw new Error('Lỗi lưu challenges: ' + error.message);
   }
 
-  // Upsert questions (chỉ thêm/sửa, không tự xóa)
+  // Build và upsert questions
   const questionTypes = ['fillblank', 'matchword', 'multiplechoice', 'reorder', 'truefalse', 'typing'] as const;
   const allQuestionRows: any[] = [];
 
   for (const type of questionTypes) {
     const byChallenge = (data[type] as Record<string, any[]>) || {};
     for (const [challengeId, questions] of Object.entries(byChallenge)) {
+      // Chỉ lưu nếu challenge tồn tại trong danh sách hiện tại
+      if (!data.challenges.find(c => c.id === challengeId)) continue;
       questions.forEach((q, i) => {
+        if (!q?.id) return; // bỏ qua câu hỏi không có ID
         allQuestionRows.push({
           id:           q.id,
           challenge_id: challengeId,
@@ -218,6 +232,7 @@ export async function saveAppContent(data: AppData): Promise<void> {
     if (error) throw new Error('Lỗi lưu questions: ' + error.message);
   }
 
+  // Cập nhật cache
   _questions = {
     fillblank:      data.fillblank,
     matchword:      data.matchword as any,
@@ -227,6 +242,7 @@ export async function saveAppContent(data: AppData): Promise<void> {
     typing:         data.typing,
   };
 }
+
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
