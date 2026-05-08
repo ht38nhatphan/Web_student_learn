@@ -13,12 +13,38 @@ import TeacherDashboard from './components/TeacherDashboard';
 import StudentHome from './components/StudentHome';
 import LessonEngine from './components/LessonEngine';
 import StageBackground, { getPresetTheme } from './components/StageBackground';
-import { getStoreData, setStoreData, loadAllData, awardStars, fetchUserStars, onStarsChanged } from './lib/store';
+import { getStoreData, setStoreData, loadAllData, awardStars, fetchUserStars, onStarsChanged, getAppSetting, getMusicTracks } from './lib/store';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { initSound, soundManager } from './lib/sound';
 import { bgMusic } from './lib/bgMusic';
+import { useRealtimeSync } from './lib/useRealtimeSync';
 
 type AppState = 'login' | 'studentHome' | 'teacherHome' | 'playing' | 'celebration';
+
+/**
+ * Ph\u00e1t nh\u1ea1c t\u1eeb Supabase \u2014 ngu\u1ed3n duy nh\u1ea5t, kh\u00f4ng d\u00f9ng localStorage.
+ * muted-autoplay trick cho ph\u00e9p ph\u00e1t ngay khi data v\u1ec1, kh\u00f4ng c\u1ea7n user gesture.
+ */
+async function startMusicFromSettings() {
+  try {
+    const [musicSetting, tracks] = await Promise.all([
+      getAppSetting<{ enabled: boolean; volume: number; track_id: string | null }>(
+        'music', { enabled: false, volume: 0.5, track_id: null }
+      ),
+      getMusicTracks(),
+    ]);
+    if (musicSetting.enabled) {
+      const track = tracks.find(t => t.id === musicSetting.track_id);
+      bgMusic.setVolume(musicSetting.volume);
+      bgMusic.load(track?.url ?? null);
+      bgMusic.setEnabled(true);
+      bgMusic.play(); // muted trick \u2192 ph\u00e1t ngay kh\u00f4ng c\u1ea7n gesture
+    } else {
+      bgMusic.setEnabled(false);
+    }
+  } catch { /* silent */ }
+}
+
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('studentHome');
@@ -44,7 +70,7 @@ export default function App() {
     loadAllData()
       .then(() => {
         setAppReady(true);
-        // Không phát âm ngay — cần user gesture trước (AudioContext policy)
+        startMusicFromSettings(); // Phát nhạc ngay khi app sẵn sàng — không cần đăng nhập
         const savedUser = getStoreData<User | null>('hvtv_user', null);
         if (savedUser) {
           setCurrentUser(savedUser);
@@ -53,6 +79,7 @@ export default function App() {
       })
       .catch(() => {
         setAppReady(true);
+        startMusicFromSettings();
         const savedUser = getStoreData<User | null>('hvtv_user', null);
         if (savedUser) {
           setCurrentUser(savedUser);
@@ -72,8 +99,24 @@ export default function App() {
   // Pause nhạc nền khi vào làm bài, resume khi về home
   useEffect(() => {
     if (appState === 'playing') bgMusic.pause();
-    else if (appState === 'studentHome') bgMusic.play();
+    else if (appState === 'studentHome' && bgMusic.enabled) bgMusic.play();
   }, [appState]);
+
+  // ── Realtime sync: đồng bộ tất cả máy khi DB thay đổi ──────────────────────
+  useRealtimeSync({
+    onContentChange: async () => {
+      // Nội dung bài học / câu hỏi thay đổi → reload data và cập nhật state
+      await loadAllData();
+      // Trigger re-render bằng cách tạo timestamp key mới (hoặc reload trang nếu đang chơi)
+      if (appState === 'playing') {
+        // Không interrupt giữa chừng — chỉ hiện toast nhỏ để biết
+        console.info('[Realtime] Nội dung đã được cập nhật bởi giáo viên.');
+      } else {
+        // Refresh toàn bộ trang để load data mới nhất
+        window.location.reload();
+      }
+    },
+  });
 
   // Fetch frame GIF/preset từ DB khi bắt đầu chơi — PHẢI TRƯỚC mọi early return
   useEffect(() => {
@@ -134,6 +177,7 @@ export default function App() {
 
   const TEACHER_PASSWORD = '1';
 
+
   const handleLogin = async (user: User) => {
     const stars = await fetchUserStars(user.id);
     const logUser = { ...user, stars };
@@ -146,9 +190,10 @@ export default function App() {
       return;
     }
 
-    // Student login — không cần mật khẩu
+    // Student login — không cần mật khẩu, phát nhạc ngay trong gesture
     setCurrentUser(logUser);
     setStoreData('hvtv_user', logUser);
+    startMusicFromSettings(); // async — không await để không block navigation
     if (intendedGame && intendedChallenge) {
       setActiveGame(intendedGame);
       setActiveChallenge(intendedChallenge);

@@ -41,16 +41,51 @@ class BgMusicManager {
     }
   }
 
-  /** Phát nhạc (cần user gesture lần đầu) */
+  /** Phát nhạc — dùng muted autoplay trick để phát ngay không cần user gesture */
   play() {
     if (!this._enabled) return;
     this.ensureAudio();
-    if (this.audio && this.audio.paused) {
-      this.audio.play().catch(() => {
-        // Autoplay bị chặn — sẽ thử lại khi user tương tác
-        document.addEventListener('click', () => this.play(), { once: true });
-      });
+    if (!this.audio) return;
+    if (!this.audio.paused) return; // đang chạy rồi
+
+    // Trick: bắt đầu muted (browser luôn cho phép), sau đó unmute ngay
+    this.audio.muted = true;
+    this.audio.play().then(() => {
+      // Phát thành công → unmute ngay
+      if (this.audio) this.audio.muted = false;
+      this._removeAutoplayListeners();
+    }).catch(() => {
+      // Vẫn bị chặn hoàn toàn (rất hiếm) → chờ gesture
+      if (this.audio) this.audio.muted = false;
+      this._addAutoplayListeners();
+    });
+  }
+
+  private _autoplayBound = () => this._retryPlay();
+  private _autoplayEvents = ['click', 'keydown', 'touchstart', 'pointerdown'] as const;
+
+  private _addAutoplayListeners() {
+    this._autoplayEvents.forEach(ev =>
+      document.addEventListener(ev, this._autoplayBound, { once: false, passive: true })
+    );
+  }
+
+  private _removeAutoplayListeners() {
+    this._autoplayEvents.forEach(ev =>
+      document.removeEventListener(ev, this._autoplayBound)
+    );
+  }
+
+  private _retryPlay() {
+    if (!this._enabled || !this.audio || !this.audio.paused) {
+      this._removeAutoplayListeners();
+      return;
     }
+    this.audio.muted = true;
+    this.audio.play().then(() => {
+      if (this.audio) this.audio.muted = false;
+      this._removeAutoplayListeners();
+    }).catch(() => {});
   }
 
   /** Dừng nhạc (tạm dừng, giữ vị trí) */

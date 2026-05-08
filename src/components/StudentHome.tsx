@@ -8,6 +8,7 @@ import { getGames, getAppContent, getStoreData, setStoreData, getAppSetting, get
 import { soundManager, playSound } from '../lib/sound';
 import { bgMusic } from '../lib/bgMusic';
 import type { HomeBgSetting } from './AmbienceSettings';
+import { useRealtimeSync } from '../lib/useRealtimeSync';
 
 interface Props {
   user: User | null;
@@ -83,28 +84,31 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
     if (user?.id) { touchStreak(user.id); setStreak(getStreak(user.id)); }
   }, [user?.id]);
 
-  // Fetch weather + music + home background settings
+  // Fetch weather + home background settings (nhạc do App.tsx quản lý)
   useEffect(() => {
     (async () => {
-      const [weatherSetting, musicSetting, tracks, bgSetting] = await Promise.all([
+      const [weatherSetting, bgSetting] = await Promise.all([
         getAppSetting<{ type: WeatherType; enabled: boolean }>('weather', { type: 'none', enabled: false }),
-        getAppSetting<{ enabled: boolean; volume: number; track_id: string | null }>('music', { enabled: false, volume: 0.5, track_id: null }),
-        getMusicTracks(),
         getAppSetting<HomeBgSetting>('home_bg', { type: 'preset', value: '#FFFBEB' }),
       ]);
       setWeatherType(weatherSetting.enabled ? weatherSetting.type : 'none');
       setHomeBg(bgSetting);
-      bgMusic.setVolume(musicSetting.volume);
-      if (musicSetting.enabled) {
-        const track = tracks.find(t => t.id === musicSetting.track_id);
-        bgMusic.load(track?.url ?? null);
-        bgMusic.setEnabled(true);
-      } else {
-        bgMusic.setEnabled(false);
-      }
     })();
-    return () => { bgMusic.pause(); };
   }, []);
+
+  // ── Realtime: cập nhật settings ngay khi giáo viên thay đổi ────────────────
+  useRealtimeSync({
+    onSettingChange: (key, value) => {
+      if (key === 'weather') {
+        const w = value as { type: WeatherType; enabled: boolean };
+        setWeatherType(w?.enabled ? w.type : 'none');
+      }
+      if (key === 'home_bg') {
+        setHomeBg(value as HomeBgSetting);
+      }
+      // music được xử lý trực tiếp trong useRealtimeSync hook
+    },
+  });
 
   // Legacy bg music toggle
   useEffect(() => {

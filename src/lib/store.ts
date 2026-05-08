@@ -408,9 +408,14 @@ export async function setAppSetting<T>(key: string, value: T): Promise<void> {
   localStorage.setItem(SETTING_CACHE_PREFIX + key, JSON.stringify(value));
   // Ghi lên Supabase — đây là nguồn chính cho mọi máy
   try {
-    await supabase
+    const { error } = await supabase
       .from('app_settings')
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) {
+      console.error(`[setAppSetting] Supabase lỗi khi lưu "${key}":`, error.message, error.details);
+    } else {
+      console.debug(`[setAppSetting] ✅ Đã lưu "${key}" lên Supabase`);
+    }
   } catch (e) {
     console.warn('[setAppSetting] Không thể lưu lên Supabase, chỉ lưu local:', e);
   }
