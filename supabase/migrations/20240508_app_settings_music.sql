@@ -44,4 +44,13 @@ CREATE POLICY "Public read music" ON storage.objects FOR SELECT USING (bucket_id
 CREATE POLICY "Public upload music" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'music');
 CREATE POLICY "Public delete music" ON storage.objects FOR DELETE USING (bucket_id = 'music');
 
-SELECT 'Migration app_settings + music_tracks hoàn thành ✅' AS status;
+-- ─── 4. Storage bucket cho ảnh nền ──────────────────────────────────────────
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('backgrounds', 'backgrounds', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Public read backgrounds" ON storage.objects FOR SELECT USING (bucket_id = 'backgrounds');
+CREATE POLICY "Public upload backgrounds" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'backgrounds');
+CREATE POLICY "Public delete backgrounds" ON storage.objects FOR DELETE USING (bucket_id = 'backgrounds');
+
+SELECT 'Migration app_settings + music_tracks + backgrounds hoàn thành ✅' AS status;

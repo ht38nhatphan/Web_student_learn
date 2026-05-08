@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, XCircle, CheckCircle2, Home, RotateCcw } from 'lucide-react';
 import { FillBlankQuestion, MatchPair, MultipleChoiceQuestion, ReorderQuestion, TrueFalseQuestion, TypingQuestion } from '../data/content';
 import { ChallengeDef } from '../types';
-import { getAppContent, getStoreData, setStoreData, awardStars } from '../lib/store';
+import { getAppContent, getStoreData, setStoreData, awardStars, getAppSetting } from '../lib/store';
 import { soundManager } from '../lib/sound';
 import { supabase } from '../lib/supabase';
 import StageBackground, { getPresetTheme } from './StageBackground';
+import WeatherEffect, { WeatherType } from './WeatherEffect';
 
 // ── Ảnh nền dự phòng (Unsplash) — dùng khi chưa có GIF từ Supabase
 const FALLBACK_BG: Record<string, string[]> = {
@@ -68,6 +69,8 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
 
   // GIF từ Supabase theo lesson_id
   const [lessonBgs, setLessonBgs] = useState<LessonBgs>({});
+  // Hiệu ứng thời tiết (đọc từ settings chung)
+  const [weatherType, setWeatherType] = useState<WeatherType>('none');
 
   // Game state
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -84,6 +87,66 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   const [correctCount, setCorrectCount] = useState(0);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [finalStars, setFinalStars] = useState(0);
+
+  // Timer
+  const [timerSeconds, setTimerSeconds] = useState(0);   // 0 = tắt
+  const [timeLeft, setTimeLeft] = useState(0);
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Web Audio tick sound
+  const playTick = React.useCallback((urgent = false) => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = urgent ? 880 : 660;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.12);
+    } catch {}
+  }, []);
+
+  // Fetch weather + timer settings
+  useEffect(() => {
+    Promise.all([
+      getAppSetting<{ type: WeatherType; enabled: boolean }>('weather', { type: 'none', enabled: false }),
+      getAppSetting<number>('question_timer', 0),
+    ]).then(([w, qt]) => {
+      setWeatherType(w.enabled ? w.type : 'none');
+      setTimerSeconds(qt);
+    });
+  }, []);
+
+  // Countdown timer — chạy lại mỗi lần đổi câu
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerSeconds <= 0 || feedback !== null || showEndScreen) { setTimeLeft(0); return; }
+    setTimeLeft(timerSeconds);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          return 0;
+        }
+        playTick(prev <= 5);
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, timerSeconds]);
+
+  // Hết giờ → tự động bỏ qua (tính sai)
+  useEffect(() => {
+    if (timeLeft === 0 && timerSeconds > 0 && feedback === null && !showEndScreen && items.length > 0) {
+      // Đánh dấu sai và chuyển câu
+      handleTimeUp();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft]);
 
   // ── Load GIF từ Supabase theo lesson_id ──────────────────────────────
   useEffect(() => {
@@ -228,6 +291,20 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
     }
   };
 
+  // Hết giờ: đánh dấu sai, delay ngắn rồi chuyển câu
+  const handleTimeUp = () => {
+    if (!currentItem || feedback !== null) return;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setFeedback('error');
+    setDotColors(prev => { const n = [...prev]; n[currentIndex] = 'wrong'; return n; });
+    setPenaltyAnim(true);
+    setTimeout(() => setPenaltyAnim(false), 900);
+    soundManager.play('wrong');
+    onPenalty();
+    // Tự động chuyển câu sau 1.5s
+    setTimeout(() => { setFeedback(null); handleContinue(); }, 1500);
+  };
+
   const handleContinue = () => {
     if (currentIndex < items.length - 1) {
       soundManager.play('question_done');
@@ -239,7 +316,6 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
       else soundManager.play('challenge_done');
       setFinalStars(gained);
       setShowEndScreen(true);
-      // Sao đã được cộng từng câu ở handleCheck, chỉ gọi onComplete để trigger celebration
       onComplete(0);
     }
   };
@@ -311,6 +387,8 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
 
   return (
     <div className="flex-1 flex flex-col rounded-none sm:rounded-3xl overflow-hidden shadow-xl sm:mt-4 relative max-w-4xl mx-auto w-full">
+      {/* Hiệu ứng thời tiết — portal */}
+      <WeatherEffect type={weatherType} enabled={weatherType !== 'none'} mode="portal" />
       {/* Nội dung bên trong */}
       <div className="relative z-10 flex-1 flex flex-col bg-white/95 backdrop-blur-sm overflow-hidden">
       {/* Header */}
@@ -356,6 +434,47 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         </AnimatePresence>
         {/* Overlay */}
         <div className="absolute inset-0 z-[2]" style={{ background: 'rgba(255,255,255,0.87)', backdropFilter: 'blur(2px)' }} />
+
+        {/* ── Bộ đếm thời gian — hiển thị nổi bật trên câu hỏi ── */}
+        {timerSeconds > 0 && timeLeft > 0 && (
+          <div className="relative z-10 px-3 sm:px-5 pt-3 shrink-0">
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${
+              timeLeft <= 5
+                ? 'bg-red-50 border-red-300 animate-pulse'
+                : timeLeft <= 10
+                ? 'bg-orange-50 border-orange-300'
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              {/* Số giây */}
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 transition-all ${
+                timeLeft <= 5 ? 'bg-red-500 text-white' :
+                timeLeft <= 10 ? 'bg-orange-400 text-white' :
+                'bg-blue-500 text-white'
+              }`}>
+                {timeLeft}
+              </div>
+              {/* Progress bar thời gian */}
+              <div className="flex-1 flex flex-col gap-1">
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs font-black ${
+                    timeLeft <= 5 ? 'text-red-600' : timeLeft <= 10 ? 'text-orange-600' : 'text-blue-600'
+                  }`}>
+                    {timeLeft <= 5 ? '⚠️ Sắp hết giờ!' : timeLeft <= 10 ? '⏱ Nhanh lên!' : '⏱ Thời gian còn lại'}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400">{timerSeconds}s</span>
+                </div>
+                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                      timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-orange-400' : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${(timeLeft / timerSeconds) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="relative z-10 flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 flex flex-col justify-center">
         <AnimatePresence mode="wait">

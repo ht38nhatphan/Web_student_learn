@@ -30,6 +30,10 @@ export default function App() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [playingFrameUrl, setPlayingFrameUrl] = useState<string | null>(null);
+  // Teacher password gate
+  const [teacherPwModal, setTeacherPwModal] = useState<{ user: User } | null>(null);
+  const [teacherPwInput, setTeacherPwInput] = useState('');
+  const [teacherPwError, setTeacherPwError] = useState(false);
 
   useEffect(() => {
     initSound();
@@ -128,28 +132,48 @@ export default function App() {
     );
   }
 
+  const TEACHER_PASSWORD = '1';
+
   const handleLogin = async (user: User) => {
-    // Load sao mới nhất từ Supabase thay vì localStorage
     const stars = await fetchUserStars(user.id);
     const logUser = { ...user, stars };
-    setCurrentUser(logUser);
-    setStoreData('hvtv_user', logUser);
 
     if (user.role === 'teacher') {
+      // Yêu cầu mật khẩu trước khi vào trang giáo viên
+      setTeacherPwModal({ user: logUser });
+      setTeacherPwInput('');
+      setTeacherPwError(false);
+      return;
+    }
+
+    // Student login — không cần mật khẩu
+    setCurrentUser(logUser);
+    setStoreData('hvtv_user', logUser);
+    if (intendedGame && intendedChallenge) {
+      setActiveGame(intendedGame);
+      setActiveChallenge(intendedChallenge);
+      setAppState('playing');
+      setIntendedGame(null);
+      setIntendedChallenge(null);
+    } else if (intendedGame) {
+      startGame(intendedGame);
+      setIntendedGame(null);
+    } else {
+      setAppState('studentHome');
+    }
+  };
+
+  const confirmTeacherPassword = () => {
+    if (!teacherPwModal) return;
+    if (teacherPwInput === TEACHER_PASSWORD) {
+      const logUser = teacherPwModal.user;
+      setCurrentUser(logUser);
+      setStoreData('hvtv_user', logUser);
+      setTeacherPwModal(null);
       setAppState('teacherHome');
     } else {
-      if (intendedGame && intendedChallenge) {
-        setActiveGame(intendedGame);
-        setActiveChallenge(intendedChallenge);
-        setAppState('playing');
-        setIntendedGame(null);
-        setIntendedChallenge(null);
-      } else if (intendedGame) {
-        startGame(intendedGame);
-        setIntendedGame(null);
-      } else {
-        setAppState('studentHome');
-      }
+      setTeacherPwError(true);
+      setTeacherPwInput('');
     }
   };
 
@@ -227,8 +251,51 @@ export default function App() {
       />;
   };
 
+  // ── Modal mật khẩu giáo viên (JSX dùng lại ở nhiều nhánh)
+  const teacherPwModalJSX = teacherPwModal ? (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm mx-4 flex flex-col gap-5 border-4 border-purple-200">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">🔐</div>
+          <h2 className="text-xl font-black text-slate-800">Xác thực Giáo viên</h2>
+          <p className="text-sm text-slate-500 mt-1">Nhập mật khẩu để truy cập trang quản lý</p>
+        </div>
+        <input
+          type="password"
+          value={teacherPwInput}
+          onChange={e => { setTeacherPwInput(e.target.value); setTeacherPwError(false); }}
+          onKeyDown={e => e.key === 'Enter' && confirmTeacherPassword()}
+          placeholder="Nhập mật khẩu..."
+          autoFocus
+          className={`w-full border-2 rounded-2xl px-4 py-3 text-center text-xl font-black tracking-widest outline-none transition-all ${
+            teacherPwError ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-purple-400'
+          }`}
+        />
+        {teacherPwError && (
+          <p className="text-red-500 font-bold text-sm text-center -mt-2">❌ Mật khẩu không đúng, thử lại!</p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setTeacherPwModal(null); setTeacherPwError(false); }}
+            className="flex-1 py-3 rounded-2xl border-2 border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all"
+          >Huỷ</button>
+          <button
+            onClick={confirmTeacherPassword}
+            className="flex-1 py-3 rounded-2xl bg-purple-500 hover:bg-purple-600 border-b-4 border-purple-700 font-black text-white transition-all"
+          >Xác nhận ✓</button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   if (appState === 'login') {
-    return <LoginScreen onLogin={handleLogin} onCancel={() => { setAppState('studentHome'); setIntendedGame(null); }} />;
+    return (
+      <>
+        <LoginScreen onLogin={handleLogin} onCancel={() => { setAppState('studentHome'); setIntendedGame(null); }} />
+        {/* Modal mật khẩu hiện NGAY TRÊN màn hình đăng nhập */}
+        {teacherPwModalJSX}
+      </>
+    );
   }
 
   if (appState === 'teacherHome' && currentUser?.role === 'teacher') {
@@ -236,6 +303,9 @@ export default function App() {
   }
 
   return (
+    <>
+    {/* Modal mật khẩu cũng hiển thị nếu từ studentHome redirect tới */}
+    {teacherPwModalJSX}
     <div className="min-h-screen w-full bg-[#FFFBEB] text-[#1E293B] flex flex-col font-sans overflow-hidden">
       {/* Top Navigation */}
       <nav className="h-20 bg-white border-b-4 border-[#FCD34D] flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm relative z-20">
@@ -387,5 +457,6 @@ export default function App() {
       )}
 
     </div>
+    </>
   );
 }
