@@ -366,3 +366,69 @@ export async function fetchUserStars(userId: string): Promise<number> {
   if (user) user.stars = data.stars ?? 0;
   return data.stars ?? 0;
 }
+
+// ─── App Settings (weather, music, v.v.) ──────────────────────────────────────
+
+const SETTING_CACHE_PREFIX = 'hvtv_setting_';
+
+/** Đọc setting: localStorage cache → Supabase fallback. Hoạt động ngay không cần DB. */
+export async function getAppSetting<T>(key: string, defaultValue: T): Promise<T> {
+  // 1. Đọc localStorage cache trước (instant)
+  const cached = localStorage.getItem(SETTING_CACHE_PREFIX + key);
+  if (cached) {
+    try { return JSON.parse(cached) as T; } catch {}
+  }
+  // 2. Fallback: đọc từ Supabase rồi cache lại
+  try {
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', key)
+      .single();
+    if (error || !data) return defaultValue;
+    localStorage.setItem(SETTING_CACHE_PREFIX + key, JSON.stringify(data.value));
+    return data.value as T;
+  } catch {
+    return defaultValue;
+  }
+}
+
+/** Lưu setting: ghi localStorage ngay + sync Supabase (best-effort, không throw). */
+export async function setAppSetting<T>(key: string, value: T): Promise<void> {
+  // Ghi localStorage ngay — hoạt động kể cả chưa có DB
+  localStorage.setItem(SETTING_CACHE_PREFIX + key, JSON.stringify(value));
+  // Sync lên Supabase (không throw nếu bảng chưa tồn tại)
+  try {
+    await supabase
+      .from('app_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  } catch {
+    // DB chưa sẵn sàng — localStorage vẫn hoạt động
+  }
+}
+
+// ─── Music Tracks ──────────────────────────────────────────────────────────────
+
+export interface MusicTrack {
+  id: string;
+  label: string;
+  storage_path: string;
+  url: string;
+  sort_order: number;
+  created_at: string;
+}
+
+/** Lấy danh sách nhạc nền */
+export async function getMusicTracks(): Promise<MusicTrack[]> {
+  const { data } = await supabase
+    .from('music_tracks')
+    .select('*')
+    .order('sort_order');
+  return (data ?? []) as MusicTrack[];
+}
+
+/** Xóa 1 bài nhạc (cả DB + Storage) */
+export async function deleteMusicTrack(track: MusicTrack): Promise<void> {
+  await supabase.storage.from('music').remove([track.storage_path]);
+  await supabase.from('music_tracks').delete().eq('id', track.id);
+}

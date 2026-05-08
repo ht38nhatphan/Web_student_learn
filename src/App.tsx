@@ -16,6 +16,7 @@ import StageBackground, { getPresetTheme } from './components/StageBackground';
 import { getStoreData, setStoreData, loadAllData, awardStars, fetchUserStars, onStarsChanged } from './lib/store';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { initSound, soundManager } from './lib/sound';
+import { bgMusic } from './lib/bgMusic';
 
 type AppState = 'login' | 'studentHome' | 'teacherHome' | 'playing' | 'celebration';
 
@@ -63,6 +64,12 @@ export default function App() {
       });
     });
   }, []);
+
+  // Pause nhạc nền khi vào làm bài, resume khi về home
+  useEffect(() => {
+    if (appState === 'playing') bgMusic.pause();
+    else if (appState === 'studentHome') bgMusic.play();
+  }, [appState]);
 
   // Fetch frame GIF/preset từ DB khi bắt đầu chơi — PHẢI TRƯỚC mọi early return
   useEffect(() => {
@@ -344,8 +351,8 @@ export default function App() {
                 ))}
               </div>
             )}
-            {/* Content */}
-            <div className="flex-1 flex items-center justify-center relative z-10 overflow-y-auto">
+            {/* Content — fill entire remaining space */}
+            <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
               {renderGameEngine()}
             </div>
           </main>

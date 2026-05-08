@@ -310,23 +310,23 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   }
 
   return (
-    <div className="flex-1 flex flex-col rounded-3xl overflow-hidden shadow-xl mt-8 relative max-w-4xl mx-auto w-full">
-      {/* Nội dung bên trong — bg trong suốt nhẹ để frame từ App.tsx lộ qua */}
-      <div className="relative z-10 flex-1 flex flex-col bg-white/90 backdrop-blur-sm">
-      {/* Header — Dot Progress */}
-      <div className="p-5 flex items-center gap-4 border-b-2 border-gray-100">
-        <button onClick={onBack} className="text-gray-400 hover:text-gray-600"><X className="w-8 h-8" /></button>
-        <div className="flex flex-1 items-center justify-center gap-2 flex-wrap">
+    <div className="flex-1 flex flex-col rounded-none sm:rounded-3xl overflow-hidden shadow-xl sm:mt-4 relative max-w-4xl mx-auto w-full">
+      {/* Nội dung bên trong */}
+      <div className="relative z-10 flex-1 flex flex-col bg-white/95 backdrop-blur-sm overflow-hidden">
+      {/* Header */}
+      <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-4 border-b-2 border-gray-100 shrink-0">
+        <button onClick={onBack} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6 sm:w-8 sm:h-8" /></button>
+        <div className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
           {items.map((_, i) => (
             <div key={i} className={`rounded-full transition-all duration-300 ${
-              i === currentIndex ? 'w-5 h-5 bg-blue-400 shadow-md animate-pulse' :
-              dotColors[i] === 'correct' ? 'w-4 h-4 bg-green-500' :
-              dotColors[i] === 'wrong'   ? 'w-4 h-4 bg-red-400' :
-              'w-4 h-4 bg-gray-200'
+              i === currentIndex ? 'w-4 h-4 sm:w-5 sm:h-5 bg-blue-400 shadow-md animate-pulse' :
+              dotColors[i] === 'correct' ? 'w-3 h-3 sm:w-4 sm:h-4 bg-green-500' :
+              dotColors[i] === 'wrong'   ? 'w-3 h-3 sm:w-4 sm:h-4 bg-red-400' :
+              'w-3 h-3 sm:w-4 sm:h-4 bg-gray-200'
             }`} />
           ))}
         </div>
-        <span className="text-sm font-bold text-gray-400 shrink-0">{currentIndex + 1}/{items.length}</span>
+        <span className="text-xs sm:text-sm font-bold text-gray-400 shrink-0">{currentIndex + 1}/{items.length}</span>
 
         {/* Penalty animation */}
         <AnimatePresence>
@@ -338,8 +338,8 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         </AnimatePresence>
       </div>
 
-      {/* Content Area — với GIF nền câu hỏi (inner) */}
-      <div className="flex-1 overflow-y-auto relative">
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* GIF nền câu hỏi — thay đổi theo từng câu, có blur */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -357,35 +357,28 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         {/* Overlay */}
         <div className="absolute inset-0 z-[2]" style={{ background: 'rgba(255,255,255,0.87)', backdropFilter: 'blur(2px)' }} />
 
-        <div className="relative z-10 p-6 md:p-8 flex flex-col justify-center min-h-full">
+        <div className="relative z-10 flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           <motion.div 
             key={currentIndex}
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -50, opacity: 0 }}
-            className="w-full max-w-2xl mx-auto flex flex-col gap-8"
+            className="w-full max-w-2xl mx-auto flex flex-col gap-3 sm:gap-5"
           >
             {currentItem?.type === 'multiplechoice' && (
               <>
-                <h2 className="text-3xl font-black text-[#1E293B] mb-4">Chọn đáp án đúng</h2>
-                <div className="text-xl font-medium text-gray-700 bg-white/90 p-6 rounded-2xl border-2 border-gray-100 border-b-4 mb-4 shadow-sm">
+                <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Chọn đáp án đúng</h2>
+                <div className="text-base sm:text-lg font-medium text-gray-700 bg-white/90 p-3 sm:p-5 rounded-2xl border-2 border-gray-100 border-b-4 shadow-sm">
                   {currentItem.data.question}
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   {currentItem.data.options.map((opt, i) => (
-                    <button
-                      key={i}
-                      disabled={feedback !== null}
+                    <button key={i} disabled={feedback !== null}
                       onClick={() => { setSelectedOption(opt); soundManager.play('select'); }}
-                      className={`p-4 rounded-2xl border-2 border-b-4 font-bold text-lg text-left transition-all ${
-                        selectedOption === opt
-                          ? 'border-blue-400 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 bg-white/90 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      {opt}
-                    </button>
+                      className={`p-2.5 sm:p-4 rounded-xl border-2 border-b-4 font-bold text-sm sm:text-base text-left transition-all ${
+                        selectedOption === opt ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white/90 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
+                      }`}>{opt}</button>
                   ))}
                 </div>
               </>
@@ -393,28 +386,18 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
 
             {currentItem?.type === 'fillblank' && (
               <>
-                <h2 className="text-3xl font-black text-[#1E293B] mb-4">Điền vào chỗ trống</h2>
-                <div className="text-2xl font-bold bg-gray-50 p-8 rounded-3xl border-2 border-gray-100 border-b-4 flex items-center flex-wrap gap-2 justify-center leading-loose">
+                <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Điền vào chỗ trống</h2>
+                <div className="text-base sm:text-xl font-bold bg-gray-50 p-3 sm:p-6 rounded-2xl border-2 border-gray-100 border-b-4 flex items-center flex-wrap gap-2 justify-center leading-loose">
                   <span>{currentItem.data.sentenceBefore}</span>
-                  <div className="min-w-[4rem] h-12 border-b-4 border-gray-300 inline-flex items-end justify-center text-blue-600 px-2 pb-1 bg-white rounded-t-xl">
-                    {selectedOption || '___'}
-                  </div>
+                  <div className="min-w-[3rem] h-9 border-b-4 border-gray-300 inline-flex items-end justify-center text-blue-600 px-2 pb-1 bg-white rounded-t-xl">{selectedOption || '___'}</div>
                   <span>{currentItem.data.sentenceAfter}</span>
                 </div>
-                <div className="flex justify-center gap-4 mt-8">
+                <div className="flex justify-center gap-2 sm:gap-4">
                   {currentItem.data.options.map((opt, i) => (
-                    <button
-                      key={i}
-                      disabled={feedback !== null}
-                      onClick={() => setSelectedOption(opt)}
-                      className={`px-8 py-4 rounded-2xl border-2 border-b-4 font-black text-2xl transition-all ${
-                        selectedOption === opt
-                          ? 'border-blue-400 bg-blue-50 text-blue-700 scale-105'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 outline-none hover:-translate-y-1'
-                      }`}
-                    >
-                      {opt}
-                    </button>
+                    <button key={i} disabled={feedback !== null} onClick={() => setSelectedOption(opt)}
+                      className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl border-2 border-b-4 font-black text-lg sm:text-2xl transition-all ${
+                        selectedOption === opt ? 'border-blue-400 bg-blue-50 text-blue-700 scale-105' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 hover:-translate-y-1'
+                      }`}>{opt}</button>
                   ))}
                 </div>
               </>
@@ -422,159 +405,88 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
 
             {currentItem?.type === 'truefalse' && (
               <>
-                <h2 className="text-3xl font-black text-[#1E293B] mb-4">Đúng hay Sai?</h2>
-                <div className="text-2xl font-bold text-gray-700 bg-rose-50 p-8 rounded-3xl border-2 border-rose-100 border-b-4 text-center">
+                <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Đúng hay Sai?</h2>
+                <div className="text-base sm:text-xl font-bold text-gray-700 bg-rose-50 p-3 sm:p-6 rounded-2xl border-2 border-rose-100 border-b-4 text-center">
                   "{currentItem.data.statement}"
                 </div>
-                <div className="grid grid-cols-2 gap-6 mt-8">
-                  <button
-                    disabled={feedback !== null}
-                    onClick={() => setSelectedOption('true')}
-                    className={`py-8 rounded-3xl border-2 border-b-8 font-black text-3xl transition-all ${
-                      selectedOption === 'true'
-                        ? 'border-green-500 bg-green-50 text-green-600'
-                        : 'border-gray-200 hover:border-green-300 hover:bg-green-50 text-gray-500'
-                    }`}
-                  >
-                    ĐÚNG
-                  </button>
-                  <button
-                    disabled={feedback !== null}
-                    onClick={() => setSelectedOption('false')}
-                    className={`py-8 rounded-3xl border-2 border-b-8 font-black text-3xl transition-all ${
-                      selectedOption === 'false'
-                        ? 'border-red-500 bg-red-50 text-red-600'
-                        : 'border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500'
-                    }`}
-                  >
-                    SAI
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button disabled={feedback !== null} onClick={() => setSelectedOption('true')}
+                    className={`py-5 sm:py-8 rounded-2xl border-2 border-b-4 font-black text-xl sm:text-3xl transition-all ${
+                      selectedOption === 'true' ? 'border-green-500 bg-green-50 text-green-600' : 'border-gray-200 hover:border-green-300 hover:bg-green-50 text-gray-500'
+                    }`}>✅ ĐÚNG</button>
+                  <button disabled={feedback !== null} onClick={() => setSelectedOption('false')}
+                    className={`py-5 sm:py-8 rounded-2xl border-2 border-b-4 font-black text-xl sm:text-3xl transition-all ${
+                      selectedOption === 'false' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500'
+                    }`}>❌ SAI</button>
                 </div>
               </>
             )}
 
             {currentItem?.type === 'typing' && (
-               <>
-                 <h2 className="text-3xl font-black text-[#1E293B] mb-4">Gõ lại từ sau</h2>
-                 <div className="text-center mb-8">
-                   <div className="text-gray-500 font-bold mb-2 uppercase tracking-widest">{currentItem.data.hint}</div>
-                   <div className="text-5xl font-black text-[#1E293B] bg-teal-50 py-8 rounded-3xl border-2 border-teal-100">{currentItem.data.word}</div>
-                 </div>
-                 <input 
-                   autoFocus
-                   disabled={feedback !== null}
-                   value={typedAnswer}
-                   onChange={(e) => setTypedAnswer(e.target.value)}
-                   className="w-full text-center text-3xl font-bold p-6 bg-gray-50 border-4 border-gray-200 rounded-3xl focus:border-teal-400 focus:outline-none transition-colors"
-                   placeholder="Nhập câu trả lời..."
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter' && !isCheckDisabled() && feedback === null) {
-                       handleCheck();
-                     } else if (e.key === 'Enter' && feedback !== null) {
-                       handleContinue();
-                     }
-                   }}
-                 />
-               </>
+              <>
+                <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Gõ lại từ sau</h2>
+                <div className="text-center">
+                  <div className="text-gray-500 font-bold text-xs sm:text-sm mb-1 uppercase tracking-widest">{currentItem.data.hint}</div>
+                  <div className="text-3xl sm:text-5xl font-black text-[#1E293B] bg-teal-50 py-4 sm:py-6 rounded-2xl border-2 border-teal-100">{currentItem.data.word}</div>
+                </div>
+                <input autoFocus disabled={feedback !== null} value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                  className="w-full text-center text-xl sm:text-3xl font-bold p-3 sm:p-5 bg-gray-50 border-4 border-gray-200 rounded-2xl focus:border-teal-400 focus:outline-none transition-colors"
+                  placeholder="Nhập câu trả lời..."
+                  onKeyDown={(e) => { if (e.key==='Enter' && !isCheckDisabled() && feedback===null) handleCheck(); else if (e.key==='Enter' && feedback!==null) handleContinue(); }}
+                />
+              </>
             )}
 
             {currentItem?.type === 'reorder' && (
-               <>
-                 <h2 className="text-3xl font-black text-[#1E293B] mb-4">Xếp thành câu hoàn chỉnh</h2>
-                 
-                 <div className="min-h-[100px] p-6 bg-gray-50 border-4 border-dashed border-gray-200 rounded-3xl flex flex-wrap gap-3 items-center content-start">
-                   {reorderSelected.map((word, i) => (
-                     <motion.button
-                       layout
-                       key={`sel-${i}`}
-                       disabled={feedback !== null}
-                       onClick={() => {
-                         setReorderSelected(prev => prev.filter((_, idx) => idx !== i));
-                         setReorderAvailable(prev => [...prev, word]);
-                       }}
-                       className="px-6 py-3 bg-white border-2 border-gray-200 border-b-4 rounded-xl font-bold text-xl text-gray-700 shadow-sm"
-                     >
-                       {word}
-                     </motion.button>
-                   ))}
-                   {reorderSelected.length === 0 && (
-                     <span className="text-gray-400 font-bold w-full text-center">Bấm vào các từ bên dưới...</span>
-                   )}
-                 </div>
-
-                 <div className="mt-8 flex flex-wrap justify-center gap-4">
-                   {reorderAvailable.map((word, i) => (
-                     <motion.button
-                       layout
-                       key={`avl-${i}`}
-                       disabled={feedback !== null}
-                       onClick={() => {
-                         setReorderAvailable(prev => prev.filter((_, idx) => idx !== i));
-                         setReorderSelected(prev => [...prev, word]);
-                       }}
-                       className="px-6 py-3 bg-white border-2 border-gray-200 border-b-4 rounded-xl font-bold text-xl text-gray-700 shadow-sm hover:-translate-y-1 transition-transform"
-                     >
-                       {word}
-                     </motion.button>
-                   ))}
-                 </div>
-               </>
+              <>
+                <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Xếp thành câu hoàn chỉnh</h2>
+                <div className="min-h-[60px] sm:min-h-[80px] p-3 sm:p-4 bg-gray-50 border-4 border-dashed border-gray-200 rounded-2xl flex flex-wrap gap-2 items-center content-start">
+                  {reorderSelected.map((word, i) => (
+                    <motion.button layout key={`sel-${i}`} disabled={feedback !== null}
+                      onClick={() => { setReorderSelected(prev => prev.filter((_,idx) => idx!==i)); setReorderAvailable(prev => [...prev, word]); }}
+                      className="px-3 sm:px-5 py-1.5 sm:py-2 bg-white border-2 border-gray-200 border-b-4 rounded-xl font-bold text-sm sm:text-lg text-gray-700 shadow-sm">{word}</motion.button>
+                  ))}
+                  {reorderSelected.length === 0 && <span className="text-gray-400 font-bold w-full text-center text-sm">Bấm vào các từ bên dưới...</span>}
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {reorderAvailable.map((word, i) => (
+                    <motion.button layout key={`avl-${i}`} disabled={feedback !== null}
+                      onClick={() => { setReorderAvailable(prev => prev.filter((_,idx) => idx!==i)); setReorderSelected(prev => [...prev, word]); }}
+                      className="px-3 sm:px-5 py-1.5 sm:py-2 bg-white border-2 border-gray-200 border-b-4 rounded-xl font-bold text-sm sm:text-lg text-gray-700 shadow-sm hover:-translate-y-1 transition-transform">{word}</motion.button>
+                  ))}
+                </div>
+              </>
             )}
 
             {currentItem?.type === 'matchword' && (
               <>
-                 <h2 className="text-3xl font-black text-[#1E293B] mb-4">Nối các cặp tương ứng</h2>
-                 <div className="grid grid-cols-2 gap-8">
-                   {/* Left Side */}
-                   <div className="flex flex-col gap-3">
-                     {currentItem.data.map((pair, i) => {
-                       const isMatched = matchMatched.includes(pair.id);
-                       const isSelected = matchSelectedLeft === pair.id;
-                       return (
-                         <button
-                           key={`l-${i}`}
-                           disabled={isMatched || feedback !== null}
-                           onClick={() => setMatchSelectedLeft(pair.id)}
-                           className={`p-4 rounded-xl border-2 border-b-4 font-bold text-xl transition-all h-20 flex items-center justify-center
-                             ${isMatched ? 'opacity-0 scale-95 pointer-events-none' : ''}
-                             ${isSelected ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700'}
-                             ${!isMatched && !isSelected ? 'hover:bg-gray-50' : ''}
-                           `}
-                         >
-                           {pair.left}
-                         </button>
-                       )
-                     })}
-                   </div>
-                   {/* Right Side - we stabilize them */}
-                   <div className="flex flex-col gap-3">
-                     {matchRightItems.map((pair, i) => {
-                       const isMatched = matchMatched.includes(pair.id);
-                       return (
-                         <button
-                           key={`r-${i}`}
-                           disabled={isMatched || feedback !== null || !matchSelectedLeft}
-                           onClick={() => {
-                              if (matchSelectedLeft === pair.id) {
-                                setMatchMatched(prev => [...prev, pair.id]);
-                                setMatchSelectedLeft(null);
-                                soundManager.play('star_gain');
-                              } else {
-                                setMatchSelectedLeft(null);
-                                soundManager.play('wrong');
-                              }
-                           }}
-                           className={`p-4 rounded-xl border-2 border-b-4 font-bold text-xl transition-all h-20 flex items-center justify-center
-                             ${isMatched ? 'opacity-0 scale-95 pointer-events-none' : ''}
-                             border-gray-200 bg-white text-gray-700 hover:bg-gray-50
-                           `}
-                         >
-                           {pair.right}
-                         </button>
-                       )
-                     })}
-                   </div>
-                 </div>
+                <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Nối các cặp tương ứng</h2>
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                  <div className="flex flex-col gap-2">
+                    {currentItem.data.map((pair, i) => {
+                      const isMatched = matchMatched.includes(pair.id);
+                      const isSelected = matchSelectedLeft === pair.id;
+                      return (
+                        <button key={`l-${i}`} disabled={isMatched || feedback !== null} onClick={() => setMatchSelectedLeft(pair.id)}
+                          className={`p-2 sm:p-3 rounded-xl border-2 border-b-4 font-bold text-xs sm:text-base transition-all min-h-[48px] flex items-center justify-center text-center
+                            ${isMatched ? 'opacity-0 scale-95 pointer-events-none' : ''}
+                            ${isSelected ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}>{pair.left}</button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {matchRightItems.map((pair, i) => {
+                      const isMatched = matchMatched.includes(pair.id);
+                      return (
+                        <button key={`r-${i}`} disabled={isMatched || feedback !== null || !matchSelectedLeft}
+                          onClick={() => { if (matchSelectedLeft===pair.id) { setMatchMatched(prev=>[...prev,pair.id]); setMatchSelectedLeft(null); soundManager.play('star_gain'); } else { setMatchSelectedLeft(null); soundManager.play('wrong'); } }}
+                          className={`p-2 sm:p-3 rounded-xl border-2 border-b-4 font-bold text-xs sm:text-base transition-all min-h-[48px] flex items-center justify-center text-center
+                            ${isMatched ? 'opacity-0 scale-95 pointer-events-none' : ''} border-gray-200 bg-white text-gray-700 hover:bg-gray-50`}>{pair.right}</button>
+                      );
+                    })}
+                  </div>
+                </div>
               </>
             )}
 
@@ -583,14 +495,12 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         </div>
       </div>
 
-      {/* Footer / Feedback Banner */}
-      <div 
-        className={`w-full p-6 sm:p-8 flex items-center justify-between transition-colors border-t-2 relative ${
-          feedback === 'success' ? 'bg-green-100 border-green-200' :
-          feedback === 'error' ? 'bg-red-100 border-red-200' :
-          'bg-white border-gray-100'
-        }`}
-      >
+      {/* Footer */}
+      <div className={`w-full p-3 sm:p-5 flex items-center justify-between transition-colors border-t-2 relative shrink-0 ${
+        feedback === 'success' ? 'bg-green-100 border-green-200' :
+        feedback === 'error'   ? 'bg-red-100 border-red-200' :
+        'bg-white border-gray-100'
+      }`}>
         <div className="flex items-center gap-4">
           {feedback === 'success' && (
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex items-center gap-3 text-green-700">
@@ -626,17 +536,14 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         <button
           disabled={feedback === null && isCheckDisabled()}
           onClick={feedback === null ? handleCheck : (feedback === 'error' ? () => {
-             setFeedback(null);
-             setSelectedOption(null);
-             setTypedAnswer('');
-             setReorderSelected([]);
+             setFeedback(null); setSelectedOption(null); setTypedAnswer(''); setReorderSelected([]);
              if (currentItem?.type === 'reorder') setReorderAvailable([...currentItem.data.words].sort(() => 0.5 - Math.random()));
           } : handleContinue)}
-          className={`px-10 py-4 rounded-2xl font-black text-xl uppercase tracking-widest transition-all ${
+          className={`px-5 sm:px-10 py-3 sm:py-4 rounded-2xl font-black text-base sm:text-xl uppercase tracking-widest transition-all ${
             feedback === 'success' ? 'bg-green-500 text-white hover:bg-green-600 border-b-4 border-green-700' :
-            feedback === 'error' ? 'bg-red-500 text-white hover:bg-red-600 border-b-4 border-red-700' :
+            feedback === 'error'   ? 'bg-red-500 text-white hover:bg-red-600 border-b-4 border-red-700' :
             isCheckDisabled() ? 'bg-gray-200 text-gray-400 cursor-not-allowed' :
-            'bg-green-500 text-white border-b-4 border-green-700 hover:bg-green-400 hover:translate-y-px active:translate-y-1 active:border-b-0'
+            'bg-green-500 text-white border-b-4 border-green-700 hover:bg-green-400'
           }`}
         >
           {feedback === null ? 'KIỂM TRA' : (feedback === 'error' ? 'THỬ LẠI' : 'TIẾP TỤC')}

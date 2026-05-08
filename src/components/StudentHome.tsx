@@ -2,9 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, GameDef, ChallengeDef } from '../types';
 import Leaderboard from './Leaderboard';
+import WeatherEffect, { WeatherType } from './WeatherEffect';
 import { LogOut, ChevronLeft, PlayCircle, CheckCircle, Lock, Flame, Volume2, VolumeX } from 'lucide-react';
-import { getGames, getAppContent, getStoreData, setStoreData } from '../lib/store';
+import { getGames, getAppContent, getStoreData, setStoreData, getAppSetting, getMusicTracks } from '../lib/store';
 import { soundManager, playSound } from '../lib/sound';
+import { bgMusic } from '../lib/bgMusic';
 
 interface Props {
   user: User | null;
@@ -62,16 +64,37 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
   const [streak, setStreak] = useState(0);
   const [muted, setMuted] = useState(soundManager.isMuted);
   const [bgOn, setBgOn] = useState(false);
+  const [weatherType, setWeatherType] = useState<WeatherType>('none');
   const motivation = useMemo(() => MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)], []);
 
   useEffect(() => {
-    if (user?.id) {
-      touchStreak(user.id);
-      setStreak(getStreak(user.id));
-    }
+    if (user?.id) { touchStreak(user.id); setStreak(getStreak(user.id)); }
   }, [user?.id]);
 
-  // Nhạc nền
+  // Fetch weather + music settings từ Supabase
+  useEffect(() => {
+    (async () => {
+      const [weatherSetting, musicSetting, tracks] = await Promise.all([
+        getAppSetting<{ type: WeatherType; enabled: boolean }>('weather', { type: 'none', enabled: false }),
+        getAppSetting<{ enabled: boolean; volume: number; track_id: string | null }>('music', { enabled: false, volume: 0.5, track_id: null }),
+        getMusicTracks(),
+      ]);
+      // Apply weather
+      setWeatherType(weatherSetting.enabled ? weatherSetting.type : 'none');
+      // Apply music
+      bgMusic.setVolume(musicSetting.volume);
+      if (musicSetting.enabled) {
+        const track = tracks.find(t => t.id === musicSetting.track_id);
+        bgMusic.load(track?.url ?? null);
+        bgMusic.setEnabled(true);
+      } else {
+        bgMusic.setEnabled(false);
+      }
+    })();
+    return () => { bgMusic.pause(); }; // pause khi rời trang
+  }, []);
+
+  // Legacy bg music toggle (giữ backward compat)
   useEffect(() => {
     if (bgOn && !soundManager.isMuted) soundManager.startBGMusic();
     else soundManager.stopBGMusic();
@@ -291,7 +314,9 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden w-full">
+    <div className="flex flex-1 overflow-hidden w-full relative">
+      {/* Hiệu ứng thời tiết — phủ toàn bộ trang chủ */}
+      <WeatherEffect type={weatherType} enabled={weatherType !== 'none'} />
       {/* Sidebar */}
       <aside className="hidden md:flex w-72 bg-white border-r-4 border-amber-100 p-5 flex-col gap-5 shrink-0 overflow-y-auto">
         <Leaderboard currentUserId={user?.id} />

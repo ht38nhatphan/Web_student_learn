@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { User, GameDef } from '../types';
-import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image } from 'lucide-react';
+import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image, Sparkles } from 'lucide-react';
 import { getGames, saveGames, getAppContent, saveAppContent, deleteChallenge, getUsers, saveUsers, getStoreData, setStoreData } from '../lib/store';
 import { AppData } from '../data/content';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../lib/sound';
 import GifLibrary from './GifLibrary';
+import AmbienceSettings from './AmbienceSettings';
 
 interface Props {
   user: User;
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export default function TeacherDashboard({ user, onLogout }: Props) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'manage_games' | 'content' | 'manage_students' | 'gif_library'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'manage_games' | 'content' | 'manage_students' | 'gif_library' | 'ambience'>('overview');
   const [games, setGames] = useState<GameDef[]>([]);
   const [appContent, setAppContent] = useState<AppData | null>(null);
   
@@ -235,6 +236,9 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
             </button>
             <button onClick={() => {setActiveTab('gif_library'); setEditingGame(null); setEditingChallenge(null);}} className={`w-auto md:w-full text-left p-3 md:p-4 rounded-2xl font-bold flex items-center gap-2 md:gap-3 transition-all whitespace-nowrap ${activeTab === 'gif_library' ? 'bg-purple-100 text-purple-700 border-2 border-purple-300' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-transparent'}`}>
               <Image className="w-5 h-5 md:w-6 md:h-6 shrink-0" /> <span className="hidden sm:inline">Thư viện GIF</span>
+            </button>
+            <button onClick={() => {setActiveTab('ambience'); setEditingGame(null); setEditingChallenge(null);}} className={`w-auto md:w-full text-left p-3 md:p-4 rounded-2xl font-bold flex items-center gap-2 md:gap-3 transition-all whitespace-nowrap ${activeTab === 'ambience' ? 'bg-purple-100 text-purple-700 border-2 border-purple-300' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-transparent'}`}>
+              <Sparkles className="w-5 h-5 md:w-6 md:h-6 shrink-0" /> <span className="hidden sm:inline">Hiệu ứng &amp; Nhạc</span>
             </button>
           </div>
         </aside>
@@ -818,6 +822,9 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
 
           {/* ─── Thư viện GIF ─── */}
           {activeTab === 'gif_library' && <GifLibrary />}
+
+          {/* ─── Hiệu ứng & Nhạc nền ─── */}
+          {activeTab === 'ambience' && <AmbienceSettings />}
         </main>
       </div>
     </div>
