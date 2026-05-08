@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../lib/sound';
 import GifLibrary from './GifLibrary';
 import AmbienceSettings from './AmbienceSettings';
+import ClassOverview from './ClassOverview';
 
 interface Props {
   user: User;
@@ -245,24 +246,12 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
 
         {/* Selected View */}
         <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-50 relative">
-          {activeTab === 'overview' && (
-             <div>
-               <h2 className="text-3xl font-black mb-8 text-[#1E293B]">Tổng quan lớp học</h2>
-               <div className="grid grid-cols-3 gap-6 mb-8">
-                 <div className="bg-white p-6 rounded-3xl border-4 border-blue-200 shadow-sm">
-                   <div className="text-blue-500 font-bold mb-2 uppercase text-sm">Học sinh</div>
-                   <div className="text-4xl font-black">{studentsList.length}<span className="text-xl text-gray-400 ml-2">em</span></div>
-                 </div>
-                 <div className="bg-white p-6 rounded-3xl border-4 border-green-200 shadow-sm">
-                   <div className="text-green-500 font-bold mb-2 uppercase text-sm">Trò chơi đang bật</div>
-                   <div className="text-4xl font-black">{activeGamesCount}/{games.length}<span className="text-xl text-gray-400 ml-2">trò</span></div>
-                 </div>
-                 <div className="bg-white p-6 rounded-3xl border-4 border-yellow-200 shadow-sm">
-                   <div className="text-yellow-600 font-bold mb-2 uppercase text-sm">Tổng điểm lớp</div>
-                   <div className="text-4xl font-black">{totalStars.toLocaleString()}<span className="text-xl text-gray-400 ml-2">⭐</span></div>
-                 </div>
-               </div>
-             </div>
+          {activeTab === 'overview' && appContent && (
+            <ClassOverview
+              students={studentsList}
+              games={games}
+              appContent={appContent}
+            />
           )}
 
           {activeTab === 'manage_games' && (

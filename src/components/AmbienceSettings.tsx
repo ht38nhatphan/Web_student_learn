@@ -58,7 +58,14 @@ export default function AmbienceSettings() {
   const [bgInputMode, setBgInputMode] = useState<'preset' | 'url' | 'upload'>('preset');
   // Preview hiệu ứng ngay trên màn hình (portal)
   const [previewWeather, setPreviewWeather] = useState<WeatherType>('none');
-  const [questionTimer, setQuestionTimer] = useState<number>(0); // 0 = tắt
+
+  // Timer theo từng loại câu hỏi (0 = tắt)
+  const DEFAULT_TIMERS: Record<string, number> = {
+    multiplechoice: 0, fillblank: 0, truefalse: 0,
+    typing: 0, reorder: 0, matchword: 0,
+  };
+  const [questionTimers, setQuestionTimers] = useState<Record<string, number>>(DEFAULT_TIMERS);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const bgFileRef = useRef<HTMLInputElement>(null);
 
@@ -70,10 +77,11 @@ export default function AmbienceSettings() {
           getAppSetting<MusicSetting>('music', { enabled: false, volume: 0.5, track_id: null }),
           getMusicTracks(),
           getAppSetting<HomeBgSetting>('home_bg', { type: 'preset', value: '#FFFBEB' }),
-          getAppSetting<number>('question_timer', 0),
+          getAppSetting<Record<string, number>>('question_timers', DEFAULT_TIMERS),
         ]);
         setWeather(w); setPreviewWeather(w.enabled ? w.type : 'none');
-        setMusic(m); setHomeBg(bg); setQuestionTimer(qt);
+        setMusic(m); setHomeBg(bg);
+        setQuestionTimers({ ...DEFAULT_TIMERS, ...qt });
         setTracks(t);
         bgMusic.setVolume(m.volume);
         setDbReady(true);
@@ -371,45 +379,68 @@ export default function AmbienceSettings() {
         </div>
       </div>
 
-      {/* ══ 4. Bộ đếm thời gian ══ */}
-      <div className="bg-white rounded-3xl border-2 border-orange-200 p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h3 className="font-black text-lg text-orange-600 flex items-center gap-2"><Timer className="w-5 h-5"/>Bộ đếm thời gian trả lời</h3>
-          {questionTimer > 0 && (
-            <span className="text-xs bg-orange-50 text-orange-600 font-bold px-3 py-1 rounded-full border border-orange-200">
-              ⏱ {questionTimer}s / câu
-            </span>
-          )}
+      {/* ══ 4. Bộ đếm thời gian theo loại câu hỏi ══ */}
+      <div className="bg-white rounded-3xl border-2 border-orange-200 p-5 sm:p-6 space-y-5">
+        <div className="flex items-center gap-2">
+          <Timer className="w-5 h-5 text-orange-500"/>
+          <h3 className="font-black text-lg text-orange-600">Bộ đếm thời gian theo loại câu</h3>
         </div>
-        <p className="text-sm text-slate-500">Học sinh phải trả lời trong thời gian này. Hết giờ → tự động chuyển câu (tính sai).</p>
+        <p className="text-sm text-slate-500">
+          Đặt thời gian riêng cho từng loại câu hỏi. Hết giờ → tự động chuyển câu (tính sai). Đặt 0 = tắt đếm giờ.
+        </p>
 
-        {/* Preset buttons */}
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-          {[0, 10, 15, 20, 30, 45, 60].map(sec => (
-            <button key={sec}
-              onClick={async () => { setQuestionTimer(sec); await save({ question_timer: sec }); }}
-              className={`flex flex-col items-center gap-1 py-3 rounded-2xl border-2 font-black text-sm transition-all hover:scale-105 ${
-                questionTimer === sec ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-md scale-105' : 'border-slate-200 hover:border-orange-300 text-slate-600'
-              }`}>
-              {sec === 0 ? <><span className="text-lg">🚫</span><span className="text-xs">Tắt</span></> : <><span className="text-lg">⏱</span><span className="text-xs">{sec}s</span></>}
-            </button>
-          ))}
-        </div>
-
-        {/* Custom input */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-slate-500 shrink-0">Tuỳ chỉnh:</span>
-          <input
-            type="number" min={0} max={300} value={questionTimer}
-            onChange={e => setQuestionTimer(Number(e.target.value))}
-            className="w-24 border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-black text-center focus:border-orange-400 outline-none"
-          />
-          <span className="text-sm font-bold text-slate-400">giây</span>
-          <button onClick={async () => { await save({ question_timer: questionTimer }); }}
-            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-black text-sm transition-all">
-            Áp dụng
-          </button>
-        </div>
+        {([
+          { key: 'multiplechoice', label: '🟦 Trắc nghiệm',    icon: '🟦' },
+          { key: 'fillblank',      label: '✏️ Điền vào chỗ trống', icon: '✏️' },
+          { key: 'truefalse',      label: '✅ Đúng / Sai',       icon: '✅' },
+          { key: 'typing',         label: '⌨️ Nhập từ',         icon: '⌨️' },
+          { key: 'reorder',        label: '🔀 Sắp xếp',          icon: '🔀' },
+          { key: 'matchword',      label: '🔗 Nối từ',           icon: '🔗' },
+        ] as { key: string; label: string; icon: string }[]).map(({ key, label }) => {
+          const val = questionTimers[key] ?? 0;
+          const saveTimer = async (sec: number) => {
+            const next = { ...questionTimers, [key]: sec };
+            setQuestionTimers(next);
+            await save({ question_timers: next });
+          };
+          return (
+            <div key={key} className="border-2 border-slate-100 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-slate-700">{label}</span>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                  val > 0 ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-slate-50 text-slate-400 border border-slate-200'
+                }`}>{val > 0 ? `⏱ ${val}s` : '🚫 Tắt'}</span>
+              </div>
+              {/* Preset nhanh */}
+              <div className="flex gap-2 flex-wrap">
+                {[0, 10, 15, 20, 30, 45, 60].map(sec => (
+                  <button key={sec} onClick={() => saveTimer(sec)}
+                    className={`px-3 py-1.5 rounded-xl border-2 font-black text-sm transition-all ${
+                      val === sec
+                        ? 'border-orange-500 bg-orange-500 text-white shadow-sm'
+                        : 'border-slate-200 hover:border-orange-300 text-slate-600'
+                    }`}>
+                    {sec === 0 ? 'Tắt' : `${sec}s`}
+                  </button>
+                ))}
+              </div>
+              {/* Tuỳ chỉnh */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number" min={0} max={300} value={val}
+                  onChange={e => setQuestionTimers(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                  onBlur={e => saveTimer(Number(e.target.value))}
+                  className="w-20 border-2 border-slate-200 rounded-xl px-2 py-1.5 text-sm font-black text-center focus:border-orange-400 outline-none"
+                />
+                <span className="text-sm text-slate-400 font-bold">giây</span>
+                <button onClick={() => saveTimer(val)}
+                  className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-black text-sm transition-all">
+                  Áp dụng
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

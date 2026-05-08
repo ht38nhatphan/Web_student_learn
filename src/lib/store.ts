@@ -367,43 +367,52 @@ export async function fetchUserStars(userId: string): Promise<number> {
   return data.stars ?? 0;
 }
 
-// ─── App Settings (weather, music, v.v.) ──────────────────────────────────────
+// ─── App Settings (weather, music, background, timers, v.v.) ─────────────────
+// Mọi setting được lưu chính trên Supabase để đồng bộ TOÀN BỘ máy.
+// localStorage chỉ là cache tạm thời khi mất mạng.
 
 const SETTING_CACHE_PREFIX = 'hvtv_setting_';
 
-/** Đọc setting: localStorage cache → Supabase fallback. Hoạt động ngay không cần DB. */
+/**
+ * Đọc setting — luôn lấy từ Supabase (để mọi máy thấy giống nhau).
+ * Nếu Supabase lỗi/chậm → fallback localStorage cache.
+ */
 export async function getAppSetting<T>(key: string, defaultValue: T): Promise<T> {
-  // 1. Đọc localStorage cache trước (instant)
-  const cached = localStorage.getItem(SETTING_CACHE_PREFIX + key);
-  if (cached) {
-    try { return JSON.parse(cached) as T; } catch {}
-  }
-  // 2. Fallback: đọc từ Supabase rồi cache lại
   try {
     const { data, error } = await supabase
       .from('app_settings')
       .select('value')
       .eq('key', key)
-      .single();
-    if (error || !data) return defaultValue;
-    localStorage.setItem(SETTING_CACHE_PREFIX + key, JSON.stringify(data.value));
-    return data.value as T;
-  } catch {
-    return defaultValue;
+      .maybeSingle();
+    if (!error && data?.value !== undefined && data?.value !== null) {
+      // Cập nhật cache sau khi lấy được từ DB
+      localStorage.setItem(SETTING_CACHE_PREFIX + key, JSON.stringify(data.value));
+      return data.value as T;
+    }
+  } catch { /* mạng yếu, dùng cache bên dưới */ }
+
+  // Fallback: đọc localStorage cache (offline / DB chưa sẵn sàng)
+  const cached = localStorage.getItem(SETTING_CACHE_PREFIX + key);
+  if (cached) {
+    try { return JSON.parse(cached) as T; } catch {}
   }
+  return defaultValue;
 }
 
-/** Lưu setting: ghi localStorage ngay + sync Supabase (best-effort, không throw). */
+/**
+ * Lưu setting — ghi Supabase trước (nguồn thật), cache localStorage song song.
+ * Mọi máy khác lấy value mới khi load trang.
+ */
 export async function setAppSetting<T>(key: string, value: T): Promise<void> {
-  // Ghi localStorage ngay — hoạt động kể cả chưa có DB
+  // Cache local ngay lập tức (UI responsive)
   localStorage.setItem(SETTING_CACHE_PREFIX + key, JSON.stringify(value));
-  // Sync lên Supabase (không throw nếu bảng chưa tồn tại)
+  // Ghi lên Supabase — đây là nguồn chính cho mọi máy
   try {
     await supabase
       .from('app_settings')
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
-  } catch {
-    // DB chưa sẵn sàng — localStorage vẫn hoạt động
+  } catch (e) {
+    console.warn('[setAppSetting] Không thể lưu lên Supabase, chỉ lưu local:', e);
   }
 }
 

@@ -88,10 +88,17 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [finalStars, setFinalStars] = useState(0);
 
-  // Timer
-  const [timerSeconds, setTimerSeconds] = useState(0);   // 0 = tắt
+  // Timer theo từng loại câu hỏi
+  const DEFAULT_TIMER_MAP: Record<string, number> = {
+    multiplechoice: 0, fillblank: 0, truefalse: 0,
+    typing: 0, reorder: 0, matchword: 0,
+  };
+  const [timerMap, setTimerMap] = useState<Record<string, number>>(DEFAULT_TIMER_MAP);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Số giây của câu hiện tại
+  const activeTimer = timerMap[currentItem?.type ?? ''] ?? 0;
 
   // Web Audio tick sound
   const playTick = React.useCallback((urgent = false) => {
@@ -113,36 +120,32 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   useEffect(() => {
     Promise.all([
       getAppSetting<{ type: WeatherType; enabled: boolean }>('weather', { type: 'none', enabled: false }),
-      getAppSetting<number>('question_timer', 0),
+      getAppSetting<Record<string, number>>('question_timers', DEFAULT_TIMER_MAP),
     ]).then(([w, qt]) => {
       setWeatherType(w.enabled ? w.type : 'none');
-      setTimerSeconds(qt);
+      setTimerMap({ ...DEFAULT_TIMER_MAP, ...qt });
     });
   }, []);
 
-  // Countdown timer — chạy lại mỗi lần đổi câu
+  // Countdown — chạy lại mỗi lần đổi câu hoặc khi có feedback
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (timerSeconds <= 0 || feedback !== null || showEndScreen) { setTimeLeft(0); return; }
-    setTimeLeft(timerSeconds);
+    if (activeTimer <= 0 || feedback !== null || showEndScreen) { setTimeLeft(0); return; }
+    setTimeLeft(activeTimer);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timerRef.current!); return 0; }
         playTick(prev <= 5);
         return prev - 1;
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, timerSeconds]);
+  }, [currentIndex, activeTimer, feedback]);
 
   // Hết giờ → tự động bỏ qua (tính sai)
   useEffect(() => {
-    if (timeLeft === 0 && timerSeconds > 0 && feedback === null && !showEndScreen && items.length > 0) {
-      // Đánh dấu sai và chuyển câu
+    if (timeLeft === 0 && activeTimer > 0 && feedback === null && !showEndScreen && items.length > 0) {
       handleTimeUp();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,18 +264,28 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
     if (isCorrect) {
       setFeedback('success');
       setPraise(PRAISE[Math.floor(Math.random() * PRAISE.length)]);
-      setCorrectCount(c => c + 1);
+      setCorrectCount(c => { correctCountRef.current = c + 1; return c + 1; });
       setDotColors(prev => { const n = [...prev]; n[currentIndex] = 'correct'; return n; });
       soundManager.play('correct');
       setTimeout(() => soundManager.play('star_gain'), 400);
 
-      // ✅ Cộng sao NGAY LẬP TỨC vào Supabase (không đợi cuối thử thách)
+      // Dừng đếm giờ ngay khi trả lời đúng
+      if (timerRef.current) clearInterval(timerRef.current);
+      setTimeLeft(0);
+
+      // ✅ Cộng sao NGAY LẬP TỨC vào Supabase
       if (userId) awardStars(userId, 10, 'correct_answer');
 
       const progress = getStoreData<{ completedIds: string[] }>(`hvtv_prog_${userId}_${challenge.id}`, { completedIds: [] });
       let qid = currentItem.type === 'matchword' ? currentItem.data[0].id : currentItem.data.id;
       progress.completedIds.push(qid);
       setStoreData(`hvtv_prog_${userId}_${challenge.id}`, progress);
+
+      // Tự động chuyển sang câu tiếp theo sau 900ms (hiệu ứng praise)
+      setTimeout(() => {
+        setFeedback(null);
+        handleContinue();
+      }, 900);
     } else {
       setFeedback('error');
       setDotColors(prev => { const n = [...prev]; n[currentIndex] = 'wrong'; return n; });
@@ -305,13 +318,14 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
     setTimeout(() => { setFeedback(null); handleContinue(); }, 1500);
   };
 
+  const correctCountRef = React.useRef(0);
   const handleContinue = () => {
     if (currentIndex < items.length - 1) {
       soundManager.play('question_done');
       setCurrentIndex(prev => prev + 1);
     } else {
-      const gained = correctCount * 10;
-      const pct = items.length > 0 ? correctCount / items.length : 0;
+      const gained = correctCountRef.current * 10;
+      const pct = items.length > 0 ? correctCountRef.current / items.length : 0;
       if (pct >= 0.8) soundManager.play('victory');
       else soundManager.play('challenge_done');
       setFinalStars(gained);
@@ -436,7 +450,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         <div className="absolute inset-0 z-[2]" style={{ background: 'rgba(255,255,255,0.87)', backdropFilter: 'blur(2px)' }} />
 
         {/* ── Bộ đếm thời gian — hiển thị nổi bật trên câu hỏi ── */}
-        {timerSeconds > 0 && timeLeft > 0 && (
+        {activeTimer > 0 && timeLeft > 0 && (
           <div className="relative z-10 px-3 sm:px-5 pt-3 shrink-0">
             <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${
               timeLeft <= 5
@@ -461,14 +475,14 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
                   }`}>
                     {timeLeft <= 5 ? '⚠️ Sắp hết giờ!' : timeLeft <= 10 ? '⏱ Nhanh lên!' : '⏱ Thời gian còn lại'}
                   </span>
-                  <span className="text-xs font-bold text-slate-400">{timerSeconds}s</span>
+                  <span className="text-xs font-bold text-slate-400">{activeTimer}s</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-1000 ease-linear ${
                       timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-orange-400' : 'bg-blue-500'
                     }`}
-                    style={{ width: `${(timeLeft / timerSeconds) * 100}%` }}
+                    style={{ width: `${(timeLeft / activeTimer) * 100}%` }}
                   />
                 </div>
               </div>
