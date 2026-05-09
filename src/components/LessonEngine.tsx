@@ -281,7 +281,8 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
       setStoreData(`hvtv_prog_${userId}_${challenge.id}`, progress);
 
       // Tự động chuyển sang câu tiếp theo sau 900ms (hiệu ứng praise)
-      setTimeout(() => {
+      if (autoSkipTimeoutRef.current) clearTimeout(autoSkipTimeoutRef.current);
+      autoSkipTimeoutRef.current = setTimeout(() => {
         setFeedback(null);
         handleContinue();
       }, 900);
@@ -314,11 +315,16 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
     soundManager.play('wrong');
     onPenalty();
     // Tự động chuyển câu sau 1.5s
-    setTimeout(() => { setFeedback(null); handleContinue(); }, 1500);
+    if (autoSkipTimeoutRef.current) clearTimeout(autoSkipTimeoutRef.current);
+    autoSkipTimeoutRef.current = setTimeout(() => { setFeedback(null); handleContinue(); }, 1500);
   };
 
   const correctCountRef = React.useRef(0);
+  const autoSkipTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleContinue = () => {
+    if (autoSkipTimeoutRef.current) clearTimeout(autoSkipTimeoutRef.current);
+    setFeedback(null);
     if (currentIndex < items.length - 1) {
       soundManager.play('question_done');
       setCurrentIndex(prev => prev + 1);
@@ -668,6 +674,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
         <button
           disabled={feedback === null && isCheckDisabled()}
           onClick={feedback === null ? handleCheck : (feedback === 'error' ? () => {
+             if (autoSkipTimeoutRef.current) clearTimeout(autoSkipTimeoutRef.current);
              setFeedback(null); setSelectedOption(null); setTypedAnswer(''); setReorderSelected([]);
              if (currentItem?.type === 'reorder') setReorderAvailable([...currentItem.data.words].sort(() => 0.5 - Math.random()));
           } : handleContinue)}

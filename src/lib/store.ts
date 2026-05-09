@@ -20,6 +20,14 @@ export function getStoreData<T>(key: string, defaultValue: T): T {
 
 export function setStoreData<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
+  
+  if (key.startsWith('hvtv_') && key !== 'hvtv_user') {
+    supabase.from('app_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      .then(({ error }) => {
+        if (error) console.warn('Supabase sync error:', error);
+      });
+  }
 }
 
 // ─── In-memory cache ──────────────────────────────────────────────────────────
@@ -43,12 +51,14 @@ export async function loadAllData(): Promise<void> {
     { data: challengesData, error: ce },
     { data: usersData,      error: ue },
     { data: questionsData,  error: qe },
+    { data: storeData,      error: se },
   ] = await Promise.race([
     Promise.all([
       supabase.from('lessons').select('*').order('sort_order'),
       supabase.from('challenges').select('*').order('sort_order'),
       supabase.from('users').select('*').order('created_at'),
       supabase.from('questions').select('*').order('sort_order'),
+      supabase.from('app_settings').select('*').like('key', 'hvtv_%'),
     ]),
     timeout,
   ]);
@@ -57,6 +67,15 @@ export async function loadAllData(): Promise<void> {
   if (ce) console.error('Lỗi load challenges:', ce.message);
   if (ue) console.error('Lỗi load users:',      ue.message);
   if (qe) console.error('Lỗi load questions:',  qe.message);
+  if (se) console.warn('Cảnh báo load app_settings progress:', se.message);
+
+  // Restore app_settings into localStorage (overwrite local with server data)
+  if (storeData && storeData.length > 0) {
+    storeData.forEach((row: any) => {
+      if (row.key === 'hvtv_user') return; // Không bao giờ đồng bộ session người dùng hiện tại
+      localStorage.setItem(row.key, JSON.stringify(row.value));
+    });
+  }
 
   const supabaseIsEmpty = !lessonsData || lessonsData.length === 0;
 
