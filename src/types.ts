@@ -19,6 +19,7 @@ export interface GameDef {
   icon: string;
   theme: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'red';
   isActive?: boolean;
+  videoUrl?: string | null;
 }
 
 export interface ChallengeDef {

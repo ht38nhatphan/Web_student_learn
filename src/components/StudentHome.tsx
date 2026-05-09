@@ -222,6 +222,32 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
           </div>
         ) : (
           <div className="flex flex-col gap-3 max-w-2xl">
+            {selectedLesson.videoUrl && (
+              <div className="mb-4 bg-white p-4 sm:p-6 rounded-3xl border-4 border-slate-200 overflow-hidden relative shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors.bg} ${colors.text}`}>
+                    <PlayCircle className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-black text-lg text-slate-800">Video Bài Giảng</h3>
+                </div>
+                <div className="aspect-video bg-black rounded-2xl overflow-hidden relative shadow-inner">
+                  {selectedLesson.videoUrl.includes('youtube.com') || selectedLesson.videoUrl.includes('youtu.be') ? (
+                    <iframe 
+                      className="w-full h-full border-0"
+                      src={selectedLesson.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                      allowFullScreen 
+                    />
+                  ) : (
+                    <video 
+                      className="w-full h-full" 
+                      controls 
+                      src={selectedLesson.videoUrl} 
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
             {challenges.map((challenge, idx) => {
               const totalQ =
                 (appContent.multiplechoice?.[challenge.id]?.length || 0) +

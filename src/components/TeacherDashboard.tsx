@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, GameDef } from '../types';
-import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image, Sparkles } from 'lucide-react';
+import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image, Sparkles, Video, UploadCloud, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { getGames, saveGames, getAppContent, saveAppContent, deleteChallenge, getUsers, saveUsers, getStoreData, setStoreData } from '../lib/store';
 import { AppData } from '../data/content';
 import { motion, AnimatePresence } from 'motion/react';
@@ -22,6 +23,13 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
   // Game editor state
   const [editingGame, setEditingGame] = useState<GameDef | null>(null);
   const [editingChallenge, setEditingChallenge] = useState<string | null>(null); // ChallengeDef ID
+
+  // Video upload state
+  const [uploadingVideoId, setUploadingVideoId] = useState<string | null>(null);
+
+  // Add student state
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [newStudentName, setNewStudentName] = useState('');
 
   // Student management state
   const [studentsList, setStudentsList] = useState<User[]>([]);
@@ -321,6 +329,58 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                               setGames(updated); debouncedSaveGames(updated);
                             }}
                           />
+                          <div className="flex items-center gap-2 mt-2 bg-gray-50 p-2 rounded-lg border-2 border-dashed border-gray-200">
+                            <Video className="w-4 h-4 text-gray-400 shrink-0" />
+                            <input
+                              type="text"
+                              placeholder="Dán link YouTube, Google Drive hoặc URL video..."
+                              className="text-sm p-1.5 border-2 border-gray-200 rounded-lg flex-1 bg-white focus:border-purple-400 outline-none"
+                              value={game.videoUrl || ''}
+                              onChange={(e) => {
+                                const updated = games.map(g => g.id === game.id ? { ...g, videoUrl: e.target.value } : g);
+                                setGames(updated); debouncedSaveGames(updated);
+                              }}
+                            />
+                            {game.videoUrl && (
+                              <button
+                                onClick={() => {
+                                  const updated = games.map(g => g.id === game.id ? { ...g, videoUrl: null } : g);
+                                  setGames(updated); debouncedSaveGames(updated);
+                                }}
+                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                title="Xóa video"
+                              ><X className="w-4 h-4" /></button>
+                            )}
+                            <label className="flex items-center gap-1 text-sm bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-200 font-bold transition-colors shrink-0">
+                              {uploadingVideoId === game.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                              Tải file lên
+                              <input 
+                                type="file" 
+                                accept="video/mp4,video/webm,video/ogg,video/quicktime" 
+                                className="hidden" 
+                                disabled={uploadingVideoId === game.id}
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if(!file) return;
+                                  try {
+                                    setUploadingVideoId(game.id);
+                                    const ext = file.name.split('.').pop();
+                                    const fileName = `${game.id}_${Date.now()}.${ext}`;
+                                    const { error: uploadError } = await supabase.storage.from('videos').upload(fileName, file, { upsert: true });
+                                    if (uploadError) throw uploadError;
+                                    const { data } = supabase.storage.from('videos').getPublicUrl(fileName);
+                                    const updated = games.map(g => g.id === game.id ? { ...g, videoUrl: data.publicUrl } : g);
+                                    setGames(updated); await withSaving(() => saveGames(updated));
+                                  } catch (err: any) {
+                                    alert('Lỗi tải lên video: ' + err.message);
+                                  } finally {
+                                    setUploadingVideoId(null);
+                                    e.target.value = '';
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
                       </div>
                       <div className="flex flex-row md:flex-col gap-2 items-center justify-end">
@@ -351,15 +411,9 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                   <p className="text-gray-500 font-medium">Thêm, sửa thành tích và danh sách học sinh.</p>
                 </div>
                 <button 
-                  onClick={async () => {
-                    const newId = `guest_${Date.now()}`;
-                    const avatarList = ['👦🏻','👦🏽','👦🏼','👧🏻','👧🏽','👧🏼','🧒🏻','🧒🏽'];
-                    const colorList = ['bg-blue-100 border-blue-400 text-blue-700','bg-green-100 border-green-400 text-green-700','bg-orange-100 border-orange-400 text-orange-700','bg-pink-100 border-pink-400 text-pink-700','bg-teal-100 border-teal-400 text-teal-700'];
-                    const idx = studentsList.length % avatarList.length;
-                    const newStudent = { id: newId, name: 'Học sinh mới', role: 'student' as const, avatar: avatarList[idx], color: colorList[idx % colorList.length], stars: 0 };
-                    const allUsers = [...getUsers(), newStudent];
-                    setStudentsList(allUsers.filter(u => u.role === 'student'));
-                    await withSaving(() => saveUsers(allUsers));
+                  onClick={() => {
+                    setNewStudentName('');
+                    setIsAddStudentModalOpen(true);
                   }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700"
                 >
@@ -807,6 +861,63 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
               </motion.div>
             );
           })()}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isAddStudentModalOpen && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+                  <div className="p-6 border-b-2 border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-black text-2xl text-gray-800">Thêm học sinh mới</h3>
+                    <button onClick={() => setIsAddStudentModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"><X className="w-6 h-6"/></button>
+                  </div>
+                  <div className="p-6">
+                    <label className="font-bold text-gray-600 mb-2 block">Tên học sinh</label>
+                    <input 
+                      autoFocus
+                      value={newStudentName}
+                      onChange={(e) => setNewStudentName(e.target.value)}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter' && newStudentName.trim()) {
+                          const newId = `guest_${Date.now()}`;
+                          const avatarList = ['👦🏻','👦🏽','👦🏼','👧🏻','👧🏽','👧🏼','🧒🏻','🧒🏽'];
+                          const colorList = ['bg-blue-100 border-blue-400 text-blue-700','bg-green-100 border-green-400 text-green-700','bg-orange-100 border-orange-400 text-orange-700','bg-pink-100 border-pink-400 text-pink-700','bg-teal-100 border-teal-400 text-teal-700'];
+                          const idx = studentsList.length % avatarList.length;
+                          const newStudent = { id: newId, name: newStudentName.trim(), role: 'student' as const, avatar: avatarList[idx], color: colorList[idx % colorList.length], stars: 0 };
+                          const allUsers = [...getUsers(), newStudent];
+                          setStudentsList(allUsers.filter(u => u.role === 'student'));
+                          await withSaving(() => saveUsers(allUsers));
+                          setIsAddStudentModalOpen(false);
+                        }
+                      }}
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl font-bold text-xl focus:border-blue-500 outline-none transition-colors" 
+                      placeholder="Nhập tên..." 
+                    />
+                  </div>
+                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50 flex gap-3 justify-end">
+                    <button onClick={() => setIsAddStudentModalOpen(false)} className="px-6 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-200">Hủy</button>
+                    <button 
+                      disabled={!newStudentName.trim()}
+                      onClick={async () => {
+                        if (!newStudentName.trim()) return;
+                        const newId = `guest_${Date.now()}`;
+                        const avatarList = ['👦🏻','👦🏽','👦🏼','👧🏻','👧🏽','👧🏼','🧒🏻','🧒🏽'];
+                        const colorList = ['bg-blue-100 border-blue-400 text-blue-700','bg-green-100 border-green-400 text-green-700','bg-orange-100 border-orange-400 text-orange-700','bg-pink-100 border-pink-400 text-pink-700','bg-teal-100 border-teal-400 text-teal-700'];
+                        const idx = studentsList.length % avatarList.length;
+                        const newStudent = { id: newId, name: newStudentName.trim(), role: 'student' as const, avatar: avatarList[idx], color: colorList[idx % colorList.length], stars: 0 };
+                        const allUsers = [...getUsers(), newStudent];
+                        setStudentsList(allUsers.filter(u => u.role === 'student'));
+                        await withSaving(() => saveUsers(allUsers));
+                        setIsAddStudentModalOpen(false);
+                      }} 
+                      className="px-6 py-3 bg-blue-600 disabled:opacity-50 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1"
+                    >
+                      Thêm
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* ─── Thư viện GIF ─── */}

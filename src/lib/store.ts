@@ -143,6 +143,7 @@ export async function loadAllData(): Promise<void> {
   _games = (lessonsData || []).map(r => ({
     id: r.id, title: r.title, description: r.description,
     type: r.type ?? 'fillblank', icon: r.icon, theme: r.theme, isActive: r.is_active,
+    videoUrl: r.video_url,
   }));
 
   _challenges = (challengesData || []).map(r => ({
@@ -200,6 +201,7 @@ export async function saveGames(games: GameDef[]): Promise<void> {
     theme:       g.theme,
     is_active:   g.isActive ?? true,
     sort_order:  i,
+    video_url:   g.videoUrl || null,
   }));
 
   const { error } = await supabase.from('lessons').upsert(rows, { onConflict: 'id' });
