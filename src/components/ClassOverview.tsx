@@ -297,18 +297,18 @@ export default function ClassOverview({ students, games, appContent }: Props) {
                             <h4 className="font-black text-slate-600 text-sm uppercase mb-3 flex items-center gap-2"><XCircle className="w-4 h-4 text-red-400"/>Câu trả lời sai nhiều lần</h4>
                             <div className="space-y-1.5">
                               {Object.entries(st.wrongMap)
-                                .sort(([,a],[,b]) => b - a)
+                                .sort(([,a],[,b]) => Number(b) - Number(a))
                                 .slice(0, 5)
                                 .map(([qid, count]) => (
                                   <div key={qid} className="flex items-center gap-3 bg-white rounded-xl border border-red-100 px-3 py-2">
                                     <span className="text-xs font-mono text-slate-400 flex-1 truncate">ID: {qid.slice(-8)}</span>
                                     <div className="flex items-center gap-1">
-                                      {Array.from({length: Math.min(count, 5)}).map((_, i) => (
+                                      {Array.from({length: Math.min(Number(count), 5)}).map((_, i) => (
                                         <div key={i} className="w-2 h-2 rounded-full bg-red-400"/>
                                       ))}
-                                      {count > 5 && <span className="text-xs font-black text-red-500">+{count-5}</span>}
+                                      {Number(count) > 5 && <span className="text-xs font-black text-red-500">+{Number(count)-5}</span>}
                                     </div>
-                                    <span className="text-xs font-black text-red-500">{count}x sai</span>
+                                    <span className="text-xs font-black text-red-500">{Number(count)}x sai</span>
                                   </div>
                                 ))}
                             </div>

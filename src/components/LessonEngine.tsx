@@ -98,6 +98,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Số giây của câu hiện tại
+  const currentItem = items[currentIndex];
   const activeTimer = timerMap[currentItem?.type ?? ''] ?? 0;
 
   // Web Audio tick sound
@@ -223,8 +224,6 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
     loadedItems.sort(() => Math.random() - 0.5);
     setItems(loadedItems);
   }, [challenge.id, userId]);
-
-  const currentItem = items[currentIndex];
 
   // Initialize specific game states when item changes
   useEffect(() => {
