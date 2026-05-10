@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, GameDef, ChallengeDef } from '../types';
 import Leaderboard from './Leaderboard';
-import WeatherEffect, { WeatherType } from './WeatherEffect';
+import WeatherEffect, { WeatherType, CustomStyle } from './WeatherEffect';
 import { LogOut, ChevronLeft, PlayCircle, CheckCircle, Lock, Flame, Volume2, VolumeX } from 'lucide-react';
 import { getGames, getAppContent, getStoreData, setStoreData, getAppSetting, getMusicTracks } from '../lib/store';
 import { soundManager, playSound } from '../lib/sound';
@@ -76,7 +76,7 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
   const [streak, setStreak] = useState(0);
   const [muted, setMuted] = useState(soundManager.isMuted);
   const [bgOn, setBgOn] = useState(false);
-  const [weatherType, setWeatherType] = useState<WeatherType>('none');
+  const [weatherSetting, setWeatherSetting] = useState<{ type: WeatherType; customEmojis?: string[]; customStyle?: CustomStyle; speed?: number; density?: number; }>({ type: 'none' });
   const [homeBg, setHomeBg] = useState<HomeBgSetting>({ type: 'preset', value: '#FFFBEB' });
   const motivation = useMemo(() => MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)], []);
 
@@ -88,10 +88,10 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
   useEffect(() => {
     (async () => {
       const [weatherSetting, bgSetting] = await Promise.all([
-        getAppSetting<{ type: WeatherType; enabled: boolean }>('weather', { type: 'none', enabled: false }),
+        getAppSetting<{ type: WeatherType; enabled: boolean; customEmojis?: string[]; customStyle?: CustomStyle; speed?: number; density?: number; }>('weather', { type: 'none', enabled: false }),
         getAppSetting<HomeBgSetting>('home_bg', { type: 'preset', value: '#FFFBEB' }),
       ]);
-      setWeatherType(weatherSetting.enabled ? weatherSetting.type : 'none');
+      setWeatherSetting(weatherSetting.enabled ? weatherSetting : { type: 'none' });
       setHomeBg(bgSetting);
     })();
   }, []);
@@ -100,8 +100,8 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
   useRealtimeSync({
     onSettingChange: (key, value) => {
       if (key === 'weather') {
-        const w = value as { type: WeatherType; enabled: boolean };
-        setWeatherType(w?.enabled ? w.type : 'none');
+        const w = value as { type: WeatherType; enabled: boolean; customEmojis?: string[]; customStyle?: CustomStyle; speed?: number; density?: number; };
+        setWeatherSetting(w?.enabled ? w : { type: 'none' });
       }
       if (key === 'home_bg') {
         setHomeBg(value as HomeBgSetting);
@@ -331,7 +331,7 @@ export default function StudentHome({ user, onLogout, onSelectChallenge, initial
 
   return (
     <div className="flex flex-1 overflow-hidden w-full relative" style={bgStyle}>
-      <WeatherEffect type={weatherType} enabled={weatherType !== 'none'} />
+      <WeatherEffect type={weatherSetting.type} enabled={weatherSetting.type !== 'none'} customEmojis={weatherSetting.customEmojis} customStyle={weatherSetting.customStyle} speed={weatherSetting.speed} density={weatherSetting.density} />
       {/* Sidebar */}
       <aside className={`hidden md:flex w-72 border-r-4 p-5 flex-col gap-5 shrink-0 overflow-y-auto z-10 transition-all ${glass}`}>
         <Leaderboard currentUserId={user?.id} />

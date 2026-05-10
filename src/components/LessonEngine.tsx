@@ -7,7 +7,7 @@ import { getAppContent, getStoreData, setStoreData, awardStars, getAppSetting } 
 import { soundManager } from '../lib/sound';
 import { supabase } from '../lib/supabase';
 import StageBackground, { getPresetTheme } from './StageBackground';
-import WeatherEffect, { WeatherType } from './WeatherEffect';
+import WeatherEffect, { WeatherType, CustomStyle } from './WeatherEffect';
 
 // ── Ảnh nền dự phòng (Unsplash) — dùng khi chưa có GIF từ Supabase
 const FALLBACK_BG: Record<string, string[]> = {
@@ -71,7 +71,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   // GIF từ Supabase theo lesson_id
   const [lessonBgs, setLessonBgs] = useState<LessonBgs>({});
   // Hiệu ứng thời tiết (đọc từ settings chung)
-  const [weatherType, setWeatherType] = useState<WeatherType>('none');
+  const [weatherSetting, setWeatherSetting] = useState<{ type: WeatherType; customEmojis?: string[]; customStyle?: CustomStyle; speed?: number; density?: number; }>({ type: 'none' });
 
   // Game state
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -121,10 +121,10 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   // Fetch weather + timer settings
   useEffect(() => {
     Promise.all([
-      getAppSetting<{ type: WeatherType; enabled: boolean }>('weather', { type: 'none', enabled: false }),
+      getAppSetting<{ type: WeatherType; enabled: boolean; customEmojis?: string[]; customStyle?: CustomStyle; speed?: number; density?: number; }>('weather', { type: 'none', enabled: false }),
       getAppSetting<Record<string, number>>('question_timers', DEFAULT_TIMER_MAP),
     ]).then(([w, qt]) => {
-      setWeatherType(w.enabled ? w.type : 'none');
+      setWeatherSetting(w.enabled ? w : { type: 'none' });
       setTimerMap({ ...DEFAULT_TIMER_MAP, ...qt });
     });
   }, []);
@@ -429,7 +429,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
   return (
     <div className="flex-1 flex flex-col rounded-none sm:rounded-3xl overflow-hidden shadow-xl sm:mt-4 relative max-w-4xl mx-auto w-full">
       {/* Hiệu ứng thời tiết — portal */}
-      <WeatherEffect type={weatherType} enabled={weatherType !== 'none'} mode="portal" />
+      <WeatherEffect type={weatherSetting.type} enabled={weatherSetting.type !== 'none'} mode="portal" customEmojis={weatherSetting.customEmojis} customStyle={weatherSetting.customStyle} speed={weatherSetting.speed} density={weatherSetting.density} />
       {/* Nội dung bên trong */}
       <div className="relative z-10 flex-1 flex flex-col bg-white/95 backdrop-blur-sm overflow-hidden">
       {/* Header */}

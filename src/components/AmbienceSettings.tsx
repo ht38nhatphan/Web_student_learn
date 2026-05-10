@@ -6,12 +6,36 @@ import WeatherEffect, { WeatherType } from './WeatherEffect';
 import { Upload, Trash2, Music, Cloud, Play, Pause, Volume2, Check, AlertTriangle, Image, Link, Timer } from 'lucide-react';
 
 const WEATHER_OPTIONS: { type: WeatherType; label: string; emoji: string }[] = [
-  { type: 'none',   label: 'Tắt',         emoji: '🚫' },
-  { type: 'snow',   label: 'Tuyết rơi',   emoji: '❄️' },
-  { type: 'rain',   label: 'Mưa rơi',     emoji: '🌧️' },
-  { type: 'hail',   label: 'Mưa đá',      emoji: '🌨️' },
-  { type: 'leaves', label: 'Lá rơi',      emoji: '🍂' },
-  { type: 'petals', label: 'Hoa anh đào', emoji: '🌸' },
+  { type: 'none',       label: 'Tắt',         emoji: '🚫' },
+  { type: 'snow',       label: 'Tuyết',       emoji: '❄️' },
+  { type: 'rain',       label: 'Mưa',         emoji: '🌧️' },
+  { type: 'hail',       label: 'Mưa đá',      emoji: '🌨️' },
+  { type: 'leaves',     label: 'Lá rơi',      emoji: '🍂' },
+  { type: 'petals',     label: 'Hoa rơi',     emoji: '🌸' },
+  { type: 'sakura',     label: 'Anh đào',     emoji: '💮' },
+  { type: 'stars',      label: 'Sao băng',    emoji: '✨' },
+  { type: 'galaxy',     label: 'Vũ trụ',      emoji: '🌌' },
+  { type: 'fireflies',  label: 'Đom đóm',     emoji: '💫' },
+  { type: 'aurora',     label: 'Cực quang',   emoji: '🌠' },
+  { type: 'bubbles',    label: 'Bong bóng',   emoji: '🫧' },
+  { type: 'hearts',     label: 'Thả tim',     emoji: '❤️' },
+  { type: 'balloons',   label: 'Bóng bay',    emoji: '🎈' },
+  { type: 'confetti',   label: 'Pháo giấy',   emoji: '🎊' },
+  { type: 'money',      label: 'Tiền rơi',    emoji: '💸' },
+  { type: 'dice',       label: 'Xúc xắc',     emoji: '🎲' },
+  { type: 'feathers',   label: 'Lông chim',   emoji: '🪶' },
+  { type: 'fire',       label: 'Lửa cháy',    emoji: '🔥' },
+  { type: 'lightning',  label: 'Sấm sét',     emoji: '⚡' },
+  { type: 'matrix',     label: 'Ma trận',     emoji: '💻' },
+  { type: 'custom',     label: 'Tuỳ chỉnh',   emoji: '⚙️' },
+];
+
+const EMOJI_LIST = [
+  "😀","😃","😄","😁","😆","😅","😂","🤣","🥲","☺️","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤗","🫡","🤔","🫢","🤭","🤫","🤥","😶","😐","😑","😬","🫨","🫠","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","😵‍💫","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","👽","👾","🤖",
+  "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦫","🦦","🦥","🐁","🐀","🐿️","🦔",
+  "🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🌽","🥕","🥔","🍠","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🌭","🍔","🍟","🍕","🥪","🌮","🌯","🥗","🥘","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🍤","🍙","🍚","🍘","🍥","🥠","🥮","🍢","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜","🍯","🥛","🍼","☕","🍵","🧃","🥤","🧋","🍶","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧊",
+  "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🎱","🏓","🏸","🏒","⛳","🪁","🏹","🎣","🥊","🥋","🛹","🛼","🎿","⛷️","🏂","🏋️","🤸","🤺","🏌️","🏄","🏊","🚣","🧗","🚴","🏆","🥇","🥈","🥉","🏅","🎖️","🏵️","🎗️","🎫","🎟️","🎪","🤹","🎭","🎨","🎬","🎤","🎧","🎼","🎹","🥁","🎷","🎺","🎸","🎻","🎲","🎯","🎳","🎮","🎰","🧩","🚗","🚕","🚙","🚌","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🛴","🚲","🛵","🏍️","🚨","🚔","🚍","🚘","🚖","🚠","🚋","🚄","🚅","🚈","🚂","🚆","🚇","✈️","🛫","🛬","🛩️","🚀","🛸","🚁","🛶","⛵","🚤","🛳️","⛴️","🚢","⚓","⛽","🚧","🚥","🚦","🗿","🗽","🗼","🏰","🏯","🏟️","🎡","🎢","🎠","⛲","⛱️","🏖️","🏝️","🌋","⛰️","🏔️","🗻","🏕️","⛺","🏠","🏡","🏢","🏣","🏥","🏦","🏨","🏪","🏫","⛪","🕌","🕍","⛩️","🌅","🌄","🌠","🎇","🎆","🌇","🌆","🏙️","🌃","🌌","🌉",
+  "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉️","☸️","✡️","🔯","🕎","☯️","☦️","🛐","⛎","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🆔","⚛️","🉑","☢️","☣️","💯","💢","♨️","❗","❕","❓","❔","‼️","⁉️","🔅","🔆","〽️","⚠️","🚸","🔱","⚜️","🔰","♻️","✅","🈯","💹","❇️","✳️","❎","🌐","💠","Ⓜ️","🌀","💤","🏧","🚾","♿","🅿️","🔣","ℹ️","🔤","🔡","🔠","🆖","🆗","🆙","🆒","🆕","🆓","0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟","🔢","#️⃣","*️⃣","⏏️","▶️","⏸️","⏯️","⏹️","⏺️","⏭️","⏮️","⏩","⏪","⏫","⏬","◀️","🔼","🔽","➡️","⬅️","⬆️","⬇️","↗️","↘️","↙️","↖️","↕️","↔️","↪️","↩️","⤴️","⤵️","🔀","🔁","🔂","🔄","🔃","🎵","🎶","➕","➖","➗","✖️","♾️","💲","💱","™️","©️","®️","〰️","➰","➿","✔️","☑️","🔘","🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟤","🔺","🔻","🔸","🔹","🔶","🟦","🟫","⬛","⬜","🟥","🟧","🟨","🟩","🟪"
 ];
 
 // Preset nền home
@@ -37,8 +61,9 @@ function getPublicUrl(bucket: string, path: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
 }
 
+import { CustomStyle } from './WeatherEffect';
 interface MusicSetting { enabled: boolean; volume: number; track_id: string | null; }
-interface WeatherSetting { type: WeatherType; enabled: boolean; }
+interface WeatherSetting { type: WeatherType; enabled: boolean; customEmojis?: string[]; customStyle?: CustomStyle; speed?: number; density?: number; }
 
 export default function AmbienceSettings() {
   const [weather, setWeather] = useState<WeatherSetting>({ type: 'none', enabled: false });
@@ -58,6 +83,10 @@ export default function AmbienceSettings() {
   const [bgInputMode, setBgInputMode] = useState<'preset' | 'url' | 'upload'>('preset');
   // Preview hiệu ứng ngay trên màn hình (portal)
   const [previewWeather, setPreviewWeather] = useState<WeatherType>('none');
+  const [customEmojiStr, setCustomEmojiStr] = useState<string>('');
+  const [customStyleStr, setCustomStyleStr] = useState<CustomStyle>('fall');
+  const [customSpeed, setCustomSpeed] = useState<number>(1);
+  const [customDensity, setCustomDensity] = useState<number>(1);
 
   // Timer theo từng loại câu hỏi (0 = tắt)
   const DEFAULT_TIMERS: Record<string, number> = {
@@ -80,6 +109,10 @@ export default function AmbienceSettings() {
           getAppSetting<Record<string, number>>('question_timers', DEFAULT_TIMERS),
         ]);
         setWeather(w); setPreviewWeather(w.enabled ? w.type : 'none');
+        if (w.customEmojis?.length) setCustomEmojiStr(w.customEmojis.join(''));
+        if (w.customStyle) setCustomStyleStr(w.customStyle);
+        if (w.speed) setCustomSpeed(w.speed);
+        if (w.density) setCustomDensity(w.density);
         setMusic(m); setHomeBg(bg);
         setQuestionTimers({ ...DEFAULT_TIMERS, ...qt });
         setTracks(t);
@@ -99,7 +132,12 @@ export default function AmbienceSettings() {
   };
 
   const handleWeatherChange = async (type: WeatherType) => {
-    const nw: WeatherSetting = { type, enabled: type !== 'none' };
+    let arr = undefined;
+    if (type === 'custom') {
+      arr = Array.from(customEmojiStr).filter((c: any) => c.trim().length > 0);
+      if (arr.length === 0) arr = ['✨'];
+    }
+    const nw: WeatherSetting = { type, enabled: type !== 'none', customEmojis: arr, customStyle: customStyleStr, speed: customSpeed, density: customDensity };
     setWeather(nw); setPreviewWeather(type);
     await save({ weather: nw });
   };
@@ -188,7 +226,7 @@ export default function AmbienceSettings() {
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Weather preview — portal: không bị clip bởi overflow:hidden */}
-      <WeatherEffect type={previewWeather} enabled={previewWeather !== 'none'} mode="portal" />
+      <WeatherEffect type={previewWeather} enabled={previewWeather !== 'none'} mode="portal" customEmojis={weather.customEmojis} customStyle={weather.customStyle} speed={weather.speed} density={weather.density} />
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-2xl sm:text-3xl font-black text-[#1E293B]">🎨 Hiệu ứng &amp; Nhạc nền</h2>
@@ -292,7 +330,7 @@ export default function AmbienceSettings() {
             👁️ Preview ngay khi click
           </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
           {WEATHER_OPTIONS.map(opt => (
             <button key={opt.type} onClick={() => handleWeatherChange(opt.type)}
               className={`flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-2xl border-2 transition-all hover:scale-105 active:scale-95 ${
@@ -300,10 +338,115 @@ export default function AmbienceSettings() {
               }`}>
               <span className="text-3xl">{opt.emoji}</span>
               <span className="font-black text-sm">{opt.label}</span>
-              {weather.type === opt.type && <span className="text-[10px] font-black text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">✓ Đang áp dụng</span>}
+              {weather.type === opt.type && <span className="text-[10px] font-black text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full mt-1">✓ Đang áp dụng</span>}
             </button>
           ))}
         </div>
+        
+        {weather.type === 'custom' && (
+          <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl flex flex-col gap-3">
+             <div className="flex gap-3 items-center">
+               <span className="font-bold text-blue-700 whitespace-nowrap hidden sm:block">Emoji của bạn:</span>
+               <input 
+                 value={customEmojiStr}
+                 onChange={e => {
+                    setCustomEmojiStr(e.target.value);
+                    const arr = Array.from(e.target.value).filter((c: any) => c.trim().length > 0);
+                    setWeather(w => ({ ...w, customEmojis: arr.length > 0 ? arr : ['✨'] }));
+                 }}
+                 onBlur={async () => {
+                    const arr = Array.from(customEmojiStr).filter((c: any) => c.trim().length > 0);
+                    await save({ weather: { ...weather, customEmojis: arr.length > 0 ? arr : ['✨'] } });
+                 }}
+                 placeholder="Ví dụ: 🎈 🎁 🎉"
+                 className="flex-1 px-3 py-2 border-2 border-blue-300 rounded-lg outline-none focus:border-blue-500 font-bold"
+               />
+               <div className="flex gap-2">
+                 <button 
+                   onClick={() => { setCustomEmojiStr(''); setWeather(w => ({...w, customEmojis: ['✨']})); save({ weather: { ...weather, customEmojis: ['✨'] } }); }}
+                   className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition-colors whitespace-nowrap text-sm"
+                 >
+                   Xoá
+                 </button>
+               </div>
+             </div>
+
+             {/* Bảng chọn Emoji */}
+             <div className="bg-white border-2 border-blue-200 rounded-xl p-3 max-h-48 overflow-y-auto">
+               <div className="flex flex-wrap gap-1.5 justify-center">
+                 {EMOJI_LIST.map((emoji, idx) => (
+                   <button
+                     key={idx}
+                     onClick={async () => {
+                       const newVal = customEmojiStr + emoji;
+                       setCustomEmojiStr(newVal);
+                       const arr = Array.from(newVal).filter((c: any) => c.trim().length > 0);
+                       const nw = { ...weather, customEmojis: arr.length > 0 ? arr : ['✨'] };
+                       setWeather(nw);
+                       await save({ weather: nw });
+                     }}
+                     className="w-10 h-10 flex items-center justify-center text-2xl hover:bg-blue-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                   >
+                     {emoji}
+                   </button>
+                 ))}
+               </div>
+             </div>
+             
+             <div className="flex gap-3 items-center mt-2">
+               <span className="font-bold text-blue-700 whitespace-nowrap hidden sm:block">Kiểu chuyển động:</span>
+               <select 
+                 value={customStyleStr}
+                 onChange={async e => {
+                   const val = e.target.value as CustomStyle;
+                   setCustomStyleStr(val);
+                   const nw = { ...weather, customStyle: val };
+                   setWeather(nw);
+                   await save({ weather: nw });
+                 }}
+                 className="flex-1 px-3 py-2 border-2 border-blue-300 rounded-lg outline-none focus:border-blue-500 font-bold text-slate-700"
+               >
+                 <option value="fall">🍂 Rơi chậm (như lá rụng)</option>
+                 <option value="rain">🌧️ Rơi nhanh (như mưa đá)</option>
+                 <option value="float">🎈 Bay từ dưới lên (như bong bóng)</option>
+                 <option value="balloon">🎈 Bay lắc lư (như bóng bay chùm)</option>
+                 <option value="spin">✨ Rơi xoay vòng (như sao băng)</option>
+                 <option value="firefly">💫 Bay loạn xạ (như đom đóm)</option>
+                 <option value="confetti">🎊 Nổ tung toé (như pháo giấy)</option>
+                 <option value="sakura">💮 Rơi đung đưa (như hoa đào)</option>
+                 <option value="galaxy">🌌 Phóng to xoay (như vũ trụ)</option>
+                 <option value="fire">🔥 Bùng cháy (như ngọn lửa)</option>
+               </select>
+             </div>
+
+             <div className="flex gap-4 items-center flex-wrap">
+                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <span className="font-bold text-blue-700 text-sm">Tốc độ: {customSpeed}x</span>
+                  <input type="range" min="0.5" max="3" step="0.5" value={customSpeed}
+                    onChange={async e => {
+                      const v = parseFloat(e.target.value);
+                      setCustomSpeed(v);
+                      const nw = { ...weather, speed: v };
+                      setWeather(nw);
+                      await save({ weather: nw });
+                    }}
+                    className="flex-1 accent-blue-500" />
+                </div>
+                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <span className="font-bold text-blue-700 text-sm">Mật độ: {customDensity}x</span>
+                  <input type="range" min="0.5" max="3" step="0.5" value={customDensity}
+                    onChange={async e => {
+                      const v = parseFloat(e.target.value);
+                      setCustomDensity(v);
+                      const nw = { ...weather, density: v };
+                      setWeather(nw);
+                      await save({ weather: nw });
+                    }}
+                    className="flex-1 accent-blue-500" />
+                </div>
+             </div>
+          </div>
+        )}
       </div>
 
       {/* ══ 3. Nhạc nền ══ */}
