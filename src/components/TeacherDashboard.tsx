@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, GameDef } from '../types';
-import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image, Sparkles, Video, UploadCloud, Loader2 } from 'lucide-react';
+import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image, Sparkles, Video, UploadCloud, Loader2, Maximize2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getGames, saveGames, getAppContent, saveAppContent, deleteChallenge, getUsers, saveUsers, getStoreData, setStoreData } from '../lib/store';
 import { AppData } from '../data/content';
@@ -40,6 +40,8 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
   const [openPickerId, setOpenPickerId] = useState<string | null>(null);
   const [saveToast, setSaveToast] = useState<'saving' | 'done' | 'error' | null>(null);
   const [muted, setMuted] = useState(soundManager.isMuted);
+  const [deletingQuestion, setDeletingQuestion] = useState<{ type: keyof AppData, index: number } | null>(null);
+  const [previewingQuestionModal, setPreviewingQuestionModal] = useState<{ type: keyof AppData, index: number } | null>(null);
 
   /** Wrapper: hiện toast nhỏ góc phải trong khi lưu, KHÔNG block UI */
   const withSaving = async (fn: () => Promise<void>) => {
@@ -155,15 +157,8 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
     setEditingQuestionModal({ type: gameType, index: newIndex });
   };
 
-  const handleRemoveQuestion = async (gameType: keyof AppData, index: number) => {
-    if (!editingChallenge || !appContent) return;
-    const newContent = { ...appContent };
-    
-    if ((newContent[gameType] as any)?.[editingChallenge]) {
-      (newContent[gameType] as any)[editingChallenge].splice(index, 1);
-      setAppContent(newContent);
-      await withSaving(() => saveAppContent(newContent));
-    }
+  const handleRemoveQuestion = (gameType: keyof AppData, index: number) => {
+    setDeletingQuestion({ type: gameType, index });
   };
 
   const updateQuestion = (gameType: keyof AppData, index: number, newQuestionData: any) => {
@@ -610,17 +605,67 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                            t === 'truefalse' ? 'Đúng/Sai' : 'Gõ từ'
                         }</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {questions.map((q: any, idx: number) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border-2 border-transparent hover:border-purple-200 transition-colors">
-                               <div className="flex flex-col">
-                                 <span className="font-bold text-gray-700">Câu hỏi #{idx + 1}</span>
+                           {questions.map((q: any, idx: number) => (
+                            <div key={idx} className="p-4 bg-white rounded-2xl shadow-sm border-2 border-gray-100 flex flex-col gap-3 relative group hover:border-purple-300 transition-all">
+                               <div className="flex justify-between items-start">
+                                 <div className="flex items-center gap-2">
+                                   <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-black text-sm">
+                                      {idx + 1}
+                                   </div>
+                                   <span className="font-bold text-gray-700 text-sm uppercase">Câu hỏi</span>
+                                 </div>
+                                 <div className="flex gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                   <button onClick={() => setPreviewingQuestionModal({ type: t, index: idx })} className="p-1.5 bg-blue-50 text-blue-500 hover:bg-blue-200 rounded-lg transition-colors border border-blue-100" title="Xem chi tiết">
+                                      <Maximize2 className="w-4 h-4" />
+                                   </button>
+                                   <button onClick={() => setEditingQuestionModal({ type: t, index: idx })} className="p-1.5 bg-slate-50 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200" title="Sửa">
+                                      <Edit3 className="w-4 h-4" />
+                                   </button>
+                                   <button onClick={() => handleRemoveQuestion(t, idx)} className="p-1.5 bg-red-50 text-red-500 hover:bg-red-200 rounded-lg transition-colors border border-red-100" title="Xoá">
+                                      <Trash2 className="w-4 h-4" />
+                                   </button>
+                                 </div>
                                </div>
-                               <div className="flex gap-2">
-                                 <button onClick={() => setEditingQuestionModal({ type: t, index: idx })} className="px-3 py-1 bg-white shadow-sm border border-gray-200 rounded-lg text-sm font-bold text-purple-600 hover:bg-purple-50">Sửa</button>
-                                 <button onClick={() => handleRemoveQuestion(t, idx)} className="px-3 py-1 bg-white shadow-sm border border-gray-200 text-red-500 rounded-lg text-sm font-bold hover:bg-red-50">Xóa</button>
+                               
+                               <div className="text-sm font-medium text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                 {t === 'multiplechoice' && (
+                                   <div className="line-clamp-2 whitespace-pre-wrap">{q.question || <span className="text-gray-400 italic">Chưa nhập câu hỏi</span>}</div>
+                                 )}
+                                 {t === 'fillblank' && (
+                                   <div className="line-clamp-2 whitespace-pre-wrap">
+                                     {q.sentenceBefore || ''} <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-bold mx-1">...</span> {q.sentenceAfter || ''}
+                                   </div>
+                                 )}
+                                 {t === 'matchword' && (
+                                   <div className="flex flex-wrap gap-1">
+                                      {(q || []).slice(0, 3).map((p:any, i:number) => (
+                                        <span key={i} className="px-2 py-1 bg-green-50 border border-green-200 text-green-700 rounded-lg text-xs font-bold">{p.left} - {p.right}</span>
+                                      ))}
+                                      {(q || []).length > 3 && <span className="text-xs text-gray-400 mt-1">+{q.length - 3} cặp nữa</span>}
+                                   </div>
+                                 )}
+                                 {t === 'reorder' && (
+                                   <div className="flex flex-wrap gap-1">
+                                      {(q.words || []).map((w:string, i:number) => (
+                                        <span key={i} className="px-2 py-1 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-xs font-bold">{w}</span>
+                                      ))}
+                                   </div>
+                                 )}
+                                 {t === 'truefalse' && (
+                                   <div className="line-clamp-2 flex flex-col gap-1 whitespace-pre-wrap">
+                                     <span>{q.statement || <span className="text-gray-400 italic">Chưa nhập nhận định</span>}</span>
+                                     <span className={`text-xs font-black inline-block px-2 py-0.5 rounded w-max mt-1 ${q.isTrue ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{q.isTrue ? 'ĐÚNG' : 'SAI'}</span>
+                                   </div>
+                                 )}
+                                 {t === 'typing' && (
+                                   <div className="flex flex-col gap-1">
+                                      <span className="font-black text-lg text-purple-600">{q.word || <span className="text-gray-400 italic text-sm">Chưa nhập từ</span>}</span>
+                                      {q.hint && <span className="text-xs text-gray-400">Gợi ý: {q.hint}</span>}
+                                   </div>
+                                 )}
                                </div>
                             </div>
-                          ))}
+                           ))}
                         </div>
                       </div>
                     );
@@ -1019,6 +1064,137 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                 </motion.div>
               </motion.div>
             )}
+
+            {deletingQuestion && editingChallenge && appContent && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+                  <div className="p-6 flex flex-col items-center text-center pt-8">
+                    <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+                      <Trash2 className="w-10 h-10" />
+                    </div>
+                    <h3 className="font-black text-2xl text-gray-800 mb-2">Xóa câu hỏi?</h3>
+                    <p className="text-gray-500 font-medium">Bạn có chắc muốn xóa câu hỏi này? Hành động này không thể hoàn tác.</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 flex gap-3 justify-center border-t-2 border-gray-100">
+                    <button onClick={() => setDeletingQuestion(null)} className="flex-1 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
+                    <button 
+                      onClick={async () => {
+                        const newContent = { ...appContent };
+                        if ((newContent[deletingQuestion.type] as any)?.[editingChallenge]) {
+                          const qArray = (newContent[deletingQuestion.type] as any)[editingChallenge];
+                          const deletedQuestion = qArray[deletingQuestion.index];
+                          
+                          qArray.splice(deletingQuestion.index, 1);
+                          setAppContent(newContent);
+                          
+                          await withSaving(async () => {
+                            if (deletedQuestion && deletedQuestion.id) {
+                              await supabase.from('questions').delete().eq('id', deletedQuestion.id);
+                            }
+                            await saveAppContent(newContent);
+                          });
+                        }
+                        setDeletingQuestion(null);
+                      }} 
+                      className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1"
+                    >
+                      Xóa ngay
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {previewingQuestionModal && editingChallenge && appContent && (() => {
+              const { type, index } = previewingQuestionModal;
+              const q = (appContent[type] as any)[editingChallenge]?.[index];
+              if (!q) return null;
+              
+              return (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative flex flex-col">
+                  <div className="p-6 border-b-2 border-gray-100 flex justify-between items-center bg-blue-50">
+                    <h3 className="font-black text-2xl text-blue-800 uppercase tracking-tight flex items-center gap-2"><Maximize2 className="w-6 h-6"/> Xem trước Câu hỏi</h3>
+                    <button onClick={() => setPreviewingQuestionModal(null)} className="p-2 hover:bg-blue-200 rounded-full text-blue-500 transition-colors"><X className="w-6 h-6"/></button>
+                  </div>
+                  <div className="p-8 overflow-y-auto max-h-[70vh] bg-gray-50 flex flex-col gap-6">
+                    {/* Render different styles based on type */}
+                    {type === 'multiplechoice' && (
+                      <div className="flex flex-col gap-6 text-center items-center">
+                        <div className="text-2xl font-black text-[#1E293B] bg-white p-6 rounded-3xl shadow-sm border-2 border-blue-100 w-full whitespace-pre-wrap">{q.question}</div>
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                          {q.options?.map((opt:string, i:number) => (
+                            <div key={i} className={`p-4 rounded-2xl font-bold text-lg border-b-4 ${opt === q.answer ? 'bg-green-100 text-green-700 border-green-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
+                              {opt}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {type === 'fillblank' && (
+                      <div className="flex flex-col gap-6 items-center">
+                        <div className="text-2xl font-bold text-[#1E293B] bg-white p-6 rounded-3xl shadow-sm border-2 border-blue-100 w-full text-center whitespace-pre-wrap leading-relaxed">
+                          {q.sentenceBefore} <span className="inline-block px-4 py-1 bg-green-100 text-green-700 border-b-4 border-green-300 rounded-2xl font-black mx-2">{q.answer}</span> {q.sentenceAfter}
+                        </div>
+                        <div className="flex gap-3 flex-wrap justify-center">
+                          {q.options?.map((opt:string, i:number) => (
+                            <div key={i} className={`px-6 py-3 rounded-2xl font-bold border-b-4 bg-white border-gray-200 text-gray-500`}>
+                              {opt}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {type === 'matchword' && (
+                      <div className="flex flex-col gap-4">
+                        {(q || []).map((p:any, i:number) => (
+                          <div key={i} className="flex gap-4 items-center justify-center">
+                            <div className="flex-1 p-4 bg-blue-100 text-blue-800 font-bold rounded-2xl border-b-4 border-blue-300 text-center text-lg">{p.left}</div>
+                            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                            <div className="flex-1 p-4 bg-green-100 text-green-800 font-bold rounded-2xl border-b-4 border-green-300 text-center text-lg">{p.right}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {type === 'reorder' && (
+                      <div className="flex flex-wrap gap-3 justify-center bg-white p-8 rounded-3xl shadow-sm border-2 border-orange-100">
+                        {(q.words || []).map((w:string, i:number) => (
+                          <div key={i} className="px-6 py-3 bg-orange-100 text-orange-800 font-black text-xl rounded-2xl border-b-4 border-orange-300 shadow-sm cursor-default hover:-translate-y-1 transition-transform">
+                            {w}
+                          </div>
+                        ))}
+                        <div className="w-full text-center mt-4 pt-4 border-t-2 border-gray-100 text-gray-400 font-bold">
+                          Đáp án đúng: <span className="text-green-600">{(q.correctOrder || q.words || []).join(' ')}</span>
+                        </div>
+                      </div>
+                    )}
+                    {type === 'truefalse' && (
+                      <div className="flex flex-col gap-6 items-center">
+                        <div className="text-3xl font-black text-[#1E293B] bg-white p-8 rounded-3xl shadow-sm border-2 border-blue-100 w-full text-center whitespace-pre-wrap">
+                          {q.statement}
+                        </div>
+                        <div className={`px-12 py-6 rounded-3xl font-black text-4xl border-b-8 shadow-lg ${q.isTrue ? 'bg-green-500 text-white border-green-600' : 'bg-red-500 text-white border-red-600'}`}>
+                          {q.isTrue ? 'ĐÚNG' : 'SAI'}
+                        </div>
+                      </div>
+                    )}
+                    {type === 'typing' && (
+                      <div className="flex flex-col gap-6 items-center text-center">
+                        <div className="text-6xl font-black text-purple-600 drop-shadow-md">
+                          {q.word}
+                        </div>
+                        {q.hint && (
+                          <div className="px-6 py-3 bg-white border-2 border-purple-100 text-purple-500 font-bold rounded-2xl shadow-sm text-lg">
+                            💡 {q.hint}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+              );
+            })()}
           </AnimatePresence>
 
           {/* ─── Thư viện GIF ─── */}
