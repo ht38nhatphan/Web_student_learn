@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, GameDef } from '../types';
 import { BookOpen, Edit3, LogOut, CheckSquare, Square, Plus, Trash2, Users, X, Volume2, VolumeX, Image, Sparkles, Video, UploadCloud, Loader2, Maximize2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -75,20 +75,20 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
   const totalStars = studentsList.reduce((acc, sum) => getStoreData(`hvtv_stars_${sum.id}`, sum.stars) + acc, 0);
 
   // Debounced save for input fields (no modal spam on every keystroke)
-  let _saveGamesTimer: ReturnType<typeof setTimeout>;
+  const saveGamesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSaveGames = (g: typeof games) => {
-    clearTimeout(_saveGamesTimer);
-    _saveGamesTimer = setTimeout(() => saveGames(g), 800);
+    if (saveGamesTimerRef.current) clearTimeout(saveGamesTimerRef.current);
+    saveGamesTimerRef.current = setTimeout(() => saveGames(g), 800);
   };
-  let _saveUsersTimer: ReturnType<typeof setTimeout>;
+  const saveUsersTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSaveUsers = (u: typeof studentsList) => {
-    clearTimeout(_saveUsersTimer);
-    _saveUsersTimer = setTimeout(() => saveUsers([...getUsers().filter(x => x.role === 'teacher'), ...u]), 800);
+    if (saveUsersTimerRef.current) clearTimeout(saveUsersTimerRef.current);
+    saveUsersTimerRef.current = setTimeout(() => saveUsers([...getUsers().filter(x => x.role === 'teacher'), ...u]), 800);
   };
-  let _saveContentTimer: ReturnType<typeof setTimeout>;
+  const saveContentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSaveContent = (c: AppData) => {
-    clearTimeout(_saveContentTimer);
-    _saveContentTimer = setTimeout(() => saveAppContent(c), 800);
+    if (saveContentTimerRef.current) clearTimeout(saveContentTimerRef.current);
+    saveContentTimerRef.current = setTimeout(() => saveAppContent(c), 800);
   };
 
   const [editingQuestionModal, setEditingQuestionModal] = useState<{
