@@ -31,7 +31,11 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
 
-  // Student management state
+  // Student and Game Management state
+  const [editingGameMeta, setEditingGameMeta] = useState<{ game: GameDef, isNew: boolean } | null>(null);
+  const [deletingGame, setDeletingGame] = useState<GameDef | null>(null);
+  const [deletingStudent, setDeletingStudent] = useState<User | null>(null);
+  const [deletingChallenge, setDeletingChallenge] = useState<any | null>(null);
   const [studentsList, setStudentsList] = useState<User[]>([]);
   const [openPickerId, setOpenPickerId] = useState<string | null>(null);
   const [saveToast, setSaveToast] = useState<'saving' | 'done' | 'error' | null>(null);
@@ -162,13 +166,12 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
     }
   };
 
-  const updateQuestion = async (gameType: keyof AppData, index: number, newQuestionData: any) => {
+  const updateQuestion = (gameType: keyof AppData, index: number, newQuestionData: any) => {
     if (!editingChallenge || !appContent) return;
     const newContent = { ...appContent };
     if ((newContent[gameType] as any)?.[editingChallenge]) {
       (newContent[gameType] as any)[editingChallenge][index] = newQuestionData;
       setAppContent(newContent);
-      await withSaving(() => saveAppContent(newContent));
     }
   };
 
@@ -199,30 +202,30 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
         )}
       </AnimatePresence>
        {/* Teacher Nav */}
-       <nav className="h-20 bg-white border-b-4 border-purple-300 flex items-center justify-between px-8 shrink-0 shadow-sm relative z-20">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center text-white shadow-lg text-2xl">
+       <nav className="h-16 md:h-20 bg-white border-b-4 border-purple-300 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm relative z-20">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-500 rounded-2xl flex items-center justify-center text-white shadow-lg text-xl md:text-2xl shrink-0">
             {user.avatar}
           </div>
-          <div>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-[#1E293B]">Quản lý <span className="text-purple-600">Giáo Viên</span></h1>
-            <p className="text-sm font-bold text-gray-500">Xin chào, {user.name}</p>
+          <div className="min-w-0">
+            <h1 className="text-lg md:text-2xl font-black uppercase tracking-tight text-[#1E293B] truncate">Quản lý <span className="text-purple-600 hidden sm:inline">Giáo Viên</span></h1>
+            <p className="text-xs md:text-sm font-bold text-gray-500 truncate">Xin chào, {user.name}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
           <button
             onClick={() => { const m = soundManager.toggleMute(); setMuted(m); }}
             title={muted ? 'Bật âm thanh' : 'Tắt âm thanh'}
-            className="p-2 rounded-xl border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
+            className="p-1.5 md:p-2 rounded-xl border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
           >
-            {muted ? <VolumeX className="w-5 h-5 text-red-400" /> : <Volume2 className="w-5 h-5 text-slate-500" />}
+            {muted ? <VolumeX className="w-4 h-4 md:w-5 md:h-5 text-red-400" /> : <Volume2 className="w-4 h-4 md:w-5 md:h-5 text-slate-500" />}
           </button>
           <button
             onClick={onLogout}
-            className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-full font-bold hover:bg-red-100 transition-colors border-2 border-red-200"
+            className="flex items-center gap-1.5 md:gap-2 bg-red-50 text-red-600 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-bold hover:bg-red-100 transition-colors border-2 border-red-200 text-sm md:text-base"
           >
-            <LogOut className="w-4 h-4" /> Thoát
+            <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Thoát</span>
           </button>
         </div>
       </nav>
@@ -266,23 +269,21 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
             <div>
               <div className="flex justify-between items-start md:items-center mb-8 flex-col md:flex-row gap-4">
                 <div>
-                  <h2 className="text-3xl font-black mb-2 text-[#1E293B]">Quản lý Bài học</h2>
-                  <p className="text-gray-500 font-medium">Bạn có thể chọn những bài học nào sẽ hiển thị, và thêm bài học mới.</p>
+                  <h2 className="text-2xl md:text-3xl font-black mb-2 text-[#1E293B]">Quản lý Bài học</h2>
+                  <p className="text-sm md:text-base text-gray-500 font-medium">Bạn có thể chọn những bài học nào sẽ hiển thị, và thêm bài học mới.</p>
                 </div>
                 <button 
-                  onClick={async () => {
+                  onClick={() => {
                     const newLesson: GameDef = {
                       id: `l_${Date.now()}`,
-                      title: 'Bài học mới',
-                      description: 'Mô tả bài học...',
+                      title: '',
+                      description: '',
                       type: 'multiplechoice',
                       icon: '📚',
                       theme: 'blue',
                       isActive: true
                     };
-                    const newGames = [...games, newLesson];
-                    setGames(newGames);
-                    await withSaving(() => saveGames(newGames));
+                    setEditingGameMeta({ game: newLesson, isNew: true });
                   }}
                   className="bg-purple-600 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-purple-700 shadow-sm"
                 >
@@ -292,111 +293,41 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                  {games.map(game => (
-                   <div key={game.id} className={`bg-white p-4 rounded-2xl border-4 flex flex-col md:flex-row gap-4 justify-between transition-colors ${game.isActive !== false ? 'border-purple-200 hover:border-purple-300' : 'border-gray-200 opacity-80'}`}>
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="flex flex-col gap-2">
-                           <select 
-                             className="text-4xl w-20 h-16 bg-gray-50 rounded-xl text-center border-2 border-transparent hover:border-gray-200 focus:outline-none focus:border-purple-400 appearance-none cursor-pointer" 
-                             value={game.icon}
-                             onChange={(e) => {
-                               const v = e.target.value;
-                               if(v) {
-                                 const updated = games.map(g => g.id === game.id ? { ...g, icon: v } : g);
-                                 setGames(updated); debouncedSaveGames(updated);
-                               }
-                             }}
-                           >
-                             {['📚', '✍️', '🎮', '🧩', '🚀', '🌟', '🎨', '🔥', '🏆', '💡', '⏰', '🌈', '🚲', '🍎', '🐱', '🐶', '⚽️', '🏀', '🎸', '🎹'].map(i => <option key={i} value={i}>{i}</option>)}
-                           </select>
-                           <button onClick={() => handleToggleGame(game.id)} className="flex items-center justify-center p-2 rounded-lg bg-gray-50 hover:bg-gray-100">
-                             {game.isActive !== false ? <CheckSquare className="w-6 h-6 text-green-500" /> : <Square className="w-6 h-6 text-gray-300" />}
-                           </button>
+                   <div key={game.id} className={`bg-white p-4 sm:p-5 rounded-2xl border-4 flex flex-col gap-4 transition-colors ${game.isActive !== false ? 'border-purple-200 hover:border-purple-300' : 'border-gray-200 opacity-80'} overflow-hidden shadow-sm`}>
+                      
+                      <div className="flex items-start gap-4 min-w-0">
+                        <div className="text-4xl w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-xl flex items-center justify-center shrink-0 border-2 border-gray-100">
+                          {game.icon}
                         </div>
-                        <div className="flex-1 space-y-2">
-                          <input 
-                            className="font-bold text-[#1E293B] text-xl w-full border-b-2 border-transparent hover:border-gray-200 focus:outline-none focus:border-purple-400 font-sans" 
-                            value={game.title}
-                            onChange={(e) => {
-                              const updated = games.map(g => g.id === game.id ? { ...g, title: e.target.value } : g);
-                              setGames(updated); debouncedSaveGames(updated);
-                            }}
-                          />
-                          <textarea 
-                            className="text-gray-500 font-medium text-sm w-full border-2 border-transparent hover:border-gray-200 focus:outline-none focus:border-purple-400 rounded-lg p-2 bg-gray-50 resize-none h-16 line-clamp-2" 
-                            value={game.description}
-                            onChange={(e) => {
-                              const updated = games.map(g => g.id === game.id ? { ...g, description: e.target.value } : g);
-                              setGames(updated); debouncedSaveGames(updated);
-                            }}
-                          />
-                          <div className="flex items-center gap-2 mt-2 bg-gray-50 p-2 rounded-lg border-2 border-dashed border-gray-200">
-                            <Video className="w-4 h-4 text-gray-400 shrink-0" />
-                            <input
-                              type="text"
-                              placeholder="Dán link YouTube, Google Drive hoặc URL video..."
-                              className="text-sm p-1.5 border-2 border-gray-200 rounded-lg flex-1 bg-white focus:border-purple-400 outline-none"
-                              value={game.videoUrl || ''}
-                              onChange={(e) => {
-                                const updated = games.map(g => g.id === game.id ? { ...g, videoUrl: e.target.value } : g);
-                                setGames(updated); debouncedSaveGames(updated);
-                              }}
-                            />
-                            {game.videoUrl && (
-                              <button
-                                onClick={() => {
-                                  const updated = games.map(g => g.id === game.id ? { ...g, videoUrl: null } : g);
-                                  setGames(updated); debouncedSaveGames(updated);
-                                }}
-                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                title="Xóa video"
-                              ><X className="w-4 h-4" /></button>
-                            )}
-                            <label className="flex items-center gap-1 text-sm bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-200 font-bold transition-colors shrink-0">
-                              {uploadingVideoId === game.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                              Tải file lên
-                              <input 
-                                type="file" 
-                                accept="video/mp4,video/webm,video/ogg,video/quicktime" 
-                                className="hidden" 
-                                disabled={uploadingVideoId === game.id}
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if(!file) return;
-                                  try {
-                                    setUploadingVideoId(game.id);
-                                    const ext = file.name.split('.').pop();
-                                    const fileName = `${game.id}_${Date.now()}.${ext}`;
-                                    const { error: uploadError } = await supabase.storage.from('videos').upload(fileName, file, { upsert: true });
-                                    if (uploadError) throw uploadError;
-                                    const { data } = supabase.storage.from('videos').getPublicUrl(fileName);
-                                    const updated = games.map(g => g.id === game.id ? { ...g, videoUrl: data.publicUrl } : g);
-                                    setGames(updated); await withSaving(() => saveGames(updated));
-                                  } catch (err: any) {
-                                    alert('Lỗi tải lên video: ' + err.message);
-                                  } finally {
-                                    setUploadingVideoId(null);
-                                    e.target.value = '';
-                                  }
-                                }}
-                              />
-                            </label>
-                          </div>
+                        <div className="flex-1 min-w-0 flex flex-col justify-center min-h-[4rem] sm:min-h-[5rem]">
+                           <div className="flex items-center gap-2 mb-1 flex-wrap">
+                             <h3 className="font-black text-[#1E293B] text-lg sm:text-xl truncate">{game.title}</h3>
+                             {game.videoUrl && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] sm:text-xs font-black uppercase rounded-full shrink-0 flex items-center gap-1"><Video className="w-3 h-3"/> Có Video</span>}
+                           </div>
+                           <p className="text-gray-500 font-medium text-xs sm:text-sm line-clamp-2">{game.description || 'Chưa có mô tả...'}</p>
                         </div>
                       </div>
-                      <div className="flex flex-row md:flex-col gap-2 items-center justify-end">
-                        <button 
-                          onClick={async () => {
-                            if(window.confirm('Bạn có chắc muốn xoá bài học này?')) {
-                              const updated = games.filter(g => g.id !== game.id);
-                              setGames(updated);
-                              await withSaving(() => saveGames(updated));
-                            }
-                          }}
-                          className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border-2 border-transparent"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t-2 border-gray-50">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleToggleGame(game.id)} className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-bold text-sm transition-colors border-2 ${game.isActive !== false ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}>
+                            {game.isActive !== false ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                            {game.isActive !== false ? 'Đang Bật' : 'Đang Tắt'}
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setDeletingGame(game)} className="p-2 sm:px-3 sm:py-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-xl transition-colors border border-red-100 shrink-0" title="Xoá bài học">
+                            <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
+                          </button>
+                          <button onClick={() => setEditingGameMeta({ game, isNew: false })} className="flex-1 sm:flex-none p-2 sm:px-3 sm:py-2 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors font-bold text-sm flex items-center justify-center gap-1.5 border border-slate-200">
+                            <Edit3 className="w-4 h-4" /> <span className="sm:inline">Sửa</span>
+                          </button>
+                          <button onClick={() => setEditingGame(game)} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl font-black transition-all text-sm shadow-sm border border-purple-200">
+                            <BookOpen className="w-4 h-4" /> Nội Dung
+                          </button>
+                        </div>
                       </div>
+
                    </div>
                  ))}
               </div>
@@ -405,10 +336,10 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
 
           {activeTab === 'manage_students' && (
             <div>
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h2 className="text-3xl font-black mb-2 text-[#1E293B]">Quản lý học sinh</h2>
-                  <p className="text-gray-500 font-medium">Thêm, sửa thành tích và danh sách học sinh.</p>
+                  <h2 className="text-2xl md:text-3xl font-black mb-2 text-[#1E293B]">Quản lý học sinh</h2>
+                  <p className="text-sm md:text-base text-gray-500 font-medium">Thêm, sửa thành tích và danh sách học sinh.</p>
                 </div>
                 <button 
                   onClick={() => {
@@ -521,13 +452,7 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                           Lỗi: {Object.values(getStoreData<Record<string,number>>(`hvtv_wrong_${student.id}`, {})).reduce((a,b)=>a+b, 0)} câu
                         </div>
                         <button
-                           onClick={async () => {
-                             if(window.confirm('Bạn có chắc muốn xoá học sinh này?')) {
-                               const allUsers = getUsers().filter(u => u.id !== student.id);
-                               setStudentsList(allUsers.filter(u => u.role === 'student'));
-                               await withSaving(() => saveUsers(allUsers));
-                             }
-                           }}
+                           onClick={() => setDeletingStudent(student)}
                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                          >
                            <Trash2 className="w-5 h-5" />
@@ -578,12 +503,12 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
 
           {activeTab === 'content' && editingGame && !editingChallenge && appContent && (
             <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-              <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-4">
-                  <button onClick={() => setEditingGame(null)} className="px-4 py-2 bg-white rounded-full font-bold border-2 border-gray-200 hover:bg-gray-100 flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <button onClick={() => setEditingGame(null)} className="px-4 py-2 bg-white rounded-full font-bold border-2 border-gray-200 hover:bg-gray-100 flex items-center gap-2 shrink-0">
                     Trở lại
                   </button>
-                  <h2 className="text-3xl font-black text-[#1E293B]">Bài học: {editingGame.title}</h2>
+                  <h2 className="text-xl md:text-3xl font-black text-[#1E293B] truncate">Bài học: {editingGame.title}</h2>
                 </div>
                 <button 
                   onClick={async () => {
@@ -631,14 +556,7 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                       <div className="text-sm text-gray-500 font-bold mb-2 uppercase">{qsCount} Câu hỏi</div>
                       <div className="flex gap-2 justify-end">
                         <button 
-                          onClick={async () => {
-                            if(window.confirm('Xoá thử thách này? Tất cả câu hỏi trong thử thách cũng sẽ bị xóa.')) {
-                              await withSaving(() => deleteChallenge(challenge.id));
-                              const newContent = {...appContent};
-                              newContent.challenges = newContent.challenges.filter(c => c.id !== challenge.id);
-                              setAppContent(newContent);
-                            }
-                          }}
+                          onClick={() => setDeletingChallenge(challenge)}
                           className="p-2 text-red-400 hover:bg-red-50 rounded-lg flex-1 border-2 border-transparent focus:outline-none flex justify-center"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -657,11 +575,11 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
 
           {activeTab === 'content' && editingGame && editingChallenge && appContent && (
             <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-              <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => setEditingChallenge(null)} className="px-4 py-2 bg-white rounded-full font-bold border-2 border-gray-200 hover:bg-gray-100">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+                <button onClick={() => setEditingChallenge(null)} className="px-4 py-2 bg-white rounded-full font-bold border-2 border-gray-200 hover:bg-gray-100 shrink-0">
                   Trở lại
                 </button>
-                <h2 className="text-3xl font-black text-[#1E293B]">Nội dung: {appContent.challenges.find(c => c.id === editingChallenge)?.title}</h2>
+                <h2 className="text-xl md:text-3xl font-black text-[#1E293B] truncate">Nội dung: {appContent.challenges.find(c => c.id === editingChallenge)?.title}</h2>
               </div>
 
               <div className="bg-white p-8 rounded-3xl border-4 border-gray-200 shadow-sm">
@@ -735,14 +653,14 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                 <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden text-left">
                    <div className="p-6 border-b-2 border-gray-100 flex justify-between items-center bg-gray-50">
                      <h3 className="text-2xl font-black text-gray-800 uppercase tracking-tight">Chỉnh sửa câu hỏi</h3>
-                     <button onClick={() => setEditingQuestionModal(null)} className="p-2 bg-white rounded-full hover:bg-gray-200 text-gray-500"><X className="w-6 h-6"/></button>
+                     <button onClick={() => { setEditingQuestionModal(null); setAppContent(getAppContent()); }} className="p-2 bg-white rounded-full hover:bg-gray-200 text-gray-500"><X className="w-6 h-6"/></button>
                    </div>
                    <div className="p-6 overflow-y-auto flex-1">
                       {type === 'multiplechoice' && (
                         <div className="flex flex-col gap-4">
                            <div>
                              <label className="font-bold text-gray-600 mb-1 block">Nội dung câu hỏi</label>
-                             <input value={q.question} onChange={(e) => updateQuestion(type, index, { ...q, question: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none" />
+                             <textarea rows={3} value={q.question} onChange={(e) => updateQuestion(type, index, { ...q, question: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none whitespace-pre-wrap resize-none" />
                            </div>
                            <div>
                              <label className="font-bold text-gray-600 mb-1 block">Các lựa chọn (cách nhau bằng phẩy)</label>
@@ -760,11 +678,11 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                            <div className="grid grid-cols-2 gap-4">
                              <div>
                                <label className="font-bold text-gray-600 mb-1 block">Trước ô trống</label>
-                               <input value={q.sentenceBefore} onChange={(e) => updateQuestion(type, index, { ...q, sentenceBefore: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none" />
+                               <textarea rows={3} value={q.sentenceBefore} onChange={(e) => updateQuestion(type, index, { ...q, sentenceBefore: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none whitespace-pre-wrap resize-none" />
                              </div>
                              <div>
                                <label className="font-bold text-gray-600 mb-1 block">Sau ô trống</label>
-                               <input value={q.sentenceAfter} onChange={(e) => updateQuestion(type, index, { ...q, sentenceAfter: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none" />
+                               <textarea rows={3} value={q.sentenceAfter} onChange={(e) => updateQuestion(type, index, { ...q, sentenceAfter: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none whitespace-pre-wrap resize-none" />
                              </div>
                            </div>
                            <div>
@@ -829,7 +747,7 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                         <div className="flex flex-col gap-4">
                            <div>
                              <label className="font-bold text-gray-600 mb-1 block">Nhận định</label>
-                             <input value={q.statement} onChange={(e) => updateQuestion(type, index, { ...q, statement: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none" />
+                             <textarea rows={3} value={q.statement} onChange={(e) => updateQuestion(type, index, { ...q, statement: e.target.value })} className="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-purple-500 outline-none whitespace-pre-wrap resize-none" />
                            </div>
                            <div>
                              <label className="font-bold text-gray-600 mb-2 block">Đáp án</label>
@@ -855,7 +773,7 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                       )}
                    </div>
                    <div className="p-6 border-t-2 border-gray-100 bg-gray-50 flex justify-end">
-                     <button onClick={() => setEditingQuestionModal(null)} className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">Lưu Lại & Đóng</button>
+                     <button onClick={() => { setEditingQuestionModal(null); if (appContent) withSaving(() => saveAppContent(appContent)); }} className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">Lưu Lại & Đóng</button>
                    </div>
                 </motion.div>
               </motion.div>
@@ -913,6 +831,189 @@ export default function TeacherDashboard({ user, onLogout }: Props) {
                       className="px-6 py-3 bg-blue-600 disabled:opacity-50 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1"
                     >
                       Thêm
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+            {editingGameMeta && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden text-left">
+                  <div className="p-6 border-b-2 border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-black text-xl sm:text-2xl text-gray-800 uppercase tracking-tight">{editingGameMeta.isNew ? 'Thêm bài học mới' : 'Sửa bài học'}</h3>
+                    <button onClick={() => setEditingGameMeta(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"><X className="w-6 h-6"/></button>
+                  </div>
+                  <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+                    <div>
+                      <label className="font-bold text-gray-600 mb-1 block">Tên bài học</label>
+                      <input 
+                        className="font-black text-[#1E293B] text-xl w-full p-3 border-2 border-gray-200 focus:outline-none focus:border-purple-400 rounded-xl" 
+                        value={editingGameMeta.game.title}
+                        onChange={(e) => setEditingGameMeta({...editingGameMeta, game: {...editingGameMeta.game, title: e.target.value}})}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-gray-600 mb-1 block">Mô tả bài học</label>
+                      <textarea 
+                        className="text-gray-500 font-medium text-sm w-full p-3 border-2 border-gray-200 focus:outline-none focus:border-purple-400 rounded-xl resize-none h-24" 
+                        value={editingGameMeta.game.description}
+                        onChange={(e) => setEditingGameMeta({...editingGameMeta, game: {...editingGameMeta.game, description: e.target.value}})}
+                      />
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="shrink-0">
+                        <label className="font-bold text-gray-600 mb-1 block">Biểu tượng</label>
+                        <select 
+                          className="text-4xl w-full sm:w-20 h-16 bg-gray-50 rounded-xl text-center border-2 border-gray-200 focus:outline-none focus:border-purple-400 appearance-none cursor-pointer" 
+                          value={editingGameMeta.game.icon}
+                          onChange={(e) => setEditingGameMeta({...editingGameMeta, game: {...editingGameMeta.game, icon: e.target.value}})}
+                        >
+                          {['📚', '✍️', '🎮', '🧩', '🚀', '🌟', '🎨', '🔥', '🏆', '💡', '⏰', '🌈', '🚲', '🍎', '🐱', '🐶', '⚽️', '🏀', '🎸', '🎹'].map(i => <option key={i} value={i}>{i}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <label className="font-bold text-gray-600 mb-1 block">Video giới thiệu</label>
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="text"
+                            placeholder="Dán link YouTube, Google Drive..."
+                            className="text-sm p-3 border-2 border-gray-200 rounded-xl w-full bg-white focus:border-purple-400 outline-none min-w-0"
+                            value={editingGameMeta.game.videoUrl || ''}
+                            onChange={(e) => setEditingGameMeta({...editingGameMeta, game: {...editingGameMeta.game, videoUrl: e.target.value}})}
+                          />
+                          <label className="flex items-center justify-center gap-1.5 text-sm bg-blue-100 text-blue-700 px-4 py-3 rounded-xl cursor-pointer hover:bg-blue-200 font-black transition-colors w-full border border-blue-200">
+                            {uploadingVideoId === editingGameMeta.game.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />} Tải file video lên
+                            <input 
+                              type="file" 
+                              accept="video/mp4,video/webm,video/ogg,video/quicktime" 
+                              className="hidden" 
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if(!file) return;
+                                try {
+                                  setUploadingVideoId(editingGameMeta.game.id);
+                                  const ext = file.name.split('.').pop();
+                                  const fileName = `${editingGameMeta.game.id}_${Date.now()}.${ext}`;
+                                  const { error: uploadError } = await supabase.storage.from('videos').upload(fileName, file, { upsert: true });
+                                  if (uploadError) throw uploadError;
+                                  const { data } = supabase.storage.from('videos').getPublicUrl(fileName);
+                                  setEditingGameMeta({...editingGameMeta, game: {...editingGameMeta.game, videoUrl: data.publicUrl}});
+                                } catch (err: any) {
+                                  alert('Lỗi tải lên video: ' + err.message);
+                                } finally {
+                                  setUploadingVideoId(null);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50 flex gap-3 justify-end">
+                    <button onClick={() => setEditingGameMeta(null)} className="px-6 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
+                    <button 
+                      onClick={async () => {
+                        let updated;
+                        if (editingGameMeta.isNew) {
+                          updated = [...games, editingGameMeta.game];
+                        } else {
+                          updated = games.map(g => g.id === editingGameMeta.game.id ? editingGameMeta.game : g);
+                        }
+                        setGames(updated);
+                        await withSaving(() => saveGames(updated));
+                        setEditingGameMeta(null);
+                      }} 
+                      className={`px-6 py-3 ${editingGameMeta.isNew ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'} text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1`}
+                    >
+                      {editingGameMeta.isNew ? 'Tạo Bài Học' : 'Lưu Thay Đổi'}
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {deletingGame && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+                  <div className="p-6 flex flex-col items-center text-center pt-8">
+                    <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+                      <Trash2 className="w-10 h-10" />
+                    </div>
+                    <h3 className="font-black text-2xl text-gray-800 mb-2">Xóa bài học này?</h3>
+                    <p className="text-gray-500 font-medium">Bạn có chắc chắn muốn xóa bài học "<span className="text-gray-800 font-bold">{deletingGame.title}</span>"? Hành động này không thể hoàn tác.</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 flex gap-3 justify-center border-t-2 border-gray-100">
+                    <button onClick={() => setDeletingGame(null)} className="flex-1 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
+                    <button 
+                      onClick={async () => {
+                        const updated = games.filter(g => g.id !== deletingGame.id);
+                        setGames(updated); 
+                        await withSaving(() => saveGames(updated));
+                        await deleteChallenge(deletingGame.id);
+                        setDeletingGame(null);
+                      }} 
+                      className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1"
+                    >
+                      Xóa ngay
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {deletingStudent && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+                  <div className="p-6 flex flex-col items-center text-center pt-8">
+                    <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+                      <Trash2 className="w-10 h-10" />
+                    </div>
+                    <h3 className="font-black text-2xl text-gray-800 mb-2">Xóa học sinh này?</h3>
+                    <p className="text-gray-500 font-medium">Bạn có chắc chắn muốn xóa học sinh "<span className="text-gray-800 font-bold">{deletingStudent.name}</span>"? Hành động này không thể hoàn tác.</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 flex gap-3 justify-center border-t-2 border-gray-100">
+                    <button onClick={() => setDeletingStudent(null)} className="flex-1 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
+                    <button 
+                      onClick={async () => {
+                        const allUsers = getUsers().filter(u => u.id !== deletingStudent.id);
+                        setStudentsList(allUsers.filter(u => u.role === 'student'));
+                        await withSaving(() => saveUsers(allUsers));
+                        setDeletingStudent(null);
+                      }} 
+                      className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1"
+                    >
+                      Xóa ngay
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {deletingChallenge && appContent && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+                  <div className="p-6 flex flex-col items-center text-center pt-8">
+                    <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+                      <Trash2 className="w-10 h-10" />
+                    </div>
+                    <h3 className="font-black text-2xl text-gray-800 mb-2">Xóa thử thách?</h3>
+                    <p className="text-gray-500 font-medium">Bạn có muốn xóa thử thách "<span className="text-gray-800 font-bold">{deletingChallenge.title}</span>"? Tất cả câu hỏi bên trong sẽ bị xóa và không thể hoàn tác.</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 flex gap-3 justify-center border-t-2 border-gray-100">
+                    <button onClick={() => setDeletingChallenge(null)} className="flex-1 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
+                    <button 
+                      onClick={async () => {
+                        await withSaving(() => deleteChallenge(deletingChallenge.id));
+                        const newContent = {...appContent};
+                        newContent.challenges = newContent.challenges.filter(c => c.id !== deletingChallenge.id);
+                        setAppContent(newContent);
+                        setDeletingChallenge(null);
+                      }} 
+                      className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl shadow-lg transition-all hover:-translate-y-1"
+                    >
+                      Xóa ngay
                     </button>
                   </div>
                 </motion.div>

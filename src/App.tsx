@@ -111,6 +111,9 @@ export default function App() {
       if (appState === 'playing') {
         // Không interrupt giữa chừng — chỉ hiện toast nhỏ để biết
         console.info('[Realtime] Nội dung đã được cập nhật bởi giáo viên.');
+      } else if (appState === 'teacherHome') {
+        // Giáo viên đang soạn bài -> Không reload để tránh mất state đang sửa
+        console.info('[Realtime] Cập nhật ngầm trên TeacherDashboard.');
       } else {
         // Refresh toàn bộ trang để load data mới nhất
         window.location.reload();

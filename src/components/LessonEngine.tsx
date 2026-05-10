@@ -507,7 +507,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
             {currentItem?.type === 'multiplechoice' && (
               <>
                 <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Chọn đáp án đúng</h2>
-                <div className="text-base sm:text-lg font-medium text-gray-700 bg-white/90 p-3 sm:p-5 rounded-2xl border-2 border-gray-100 border-b-4 shadow-sm">
+                <div className="text-base sm:text-lg font-medium text-gray-700 bg-white/90 p-3 sm:p-5 rounded-2xl border-2 border-gray-100 border-b-4 shadow-sm whitespace-pre-wrap">
                   {currentItem.data.question}
                 </div>
                 <div className="flex flex-col gap-2">
@@ -526,9 +526,9 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
               <>
                 <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Điền vào chỗ trống</h2>
                 <div className="text-base sm:text-xl font-bold bg-gray-50 p-3 sm:p-6 rounded-2xl border-2 border-gray-100 border-b-4 flex items-center flex-wrap gap-2 justify-center leading-loose">
-                  <span>{currentItem.data.sentenceBefore}</span>
+                  <span className="whitespace-pre-wrap">{currentItem.data.sentenceBefore}</span>
                   <div className="min-w-[3rem] h-9 border-b-4 border-gray-300 inline-flex items-end justify-center text-blue-600 px-2 pb-1 bg-white rounded-t-xl">{selectedOption || '___'}</div>
-                  <span>{currentItem.data.sentenceAfter}</span>
+                  <span className="whitespace-pre-wrap">{currentItem.data.sentenceAfter}</span>
                 </div>
                 <div className="flex justify-center gap-2 sm:gap-4">
                   {currentItem.data.options.map((opt, i) => (
@@ -544,7 +544,7 @@ export default function LessonEngine({ challenge, userId, onComplete, onPenalty,
             {currentItem?.type === 'truefalse' && (
               <>
                 <h2 className="text-lg sm:text-2xl font-black text-[#1E293B] mb-2">Đúng hay Sai?</h2>
-                <div className="text-base sm:text-xl font-bold text-gray-700 bg-rose-50 p-3 sm:p-6 rounded-2xl border-2 border-rose-100 border-b-4 text-center">
+                <div className="text-base sm:text-xl font-bold text-gray-700 bg-rose-50 p-3 sm:p-6 rounded-2xl border-2 border-rose-100 border-b-4 text-center whitespace-pre-wrap">
                   "{currentItem.data.statement}"
                 </div>
                 <div className="grid grid-cols-2 gap-3">
